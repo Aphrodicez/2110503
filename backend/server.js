@@ -23,8 +23,20 @@ app.use(cors());
 app.set("query parser", "extended");
 
 app.use(express.json());
-//Sanitize data
-app.use(mongoSanitize());
+// Sanitize inbound data without triggering Express 5's getter-only req.query setter
+app.use((req, res, next) => {
+  ["body", "params", "headers"].forEach((key) => {
+    if (req[key]) {
+      req[key] = mongoSanitize.sanitize(req[key]);
+    }
+  });
+  if (req.query) {
+    const sanitizedQuery = mongoSanitize.sanitize({ ...req.query });
+    Object.keys(req.query).forEach((key) => delete req.query[key]);
+    Object.assign(req.query, sanitizedQuery);
+  }
+  next();
+});
 //Set security headers
 app.use(helmet());
 //Prevent XSS attacks
