@@ -1,8 +1,8 @@
-import { useState } from "react";
 import { Link } from "react-router-dom";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, MapPin, Pencil, Trash2 } from "lucide-react";
+import { Calendar, MapPin, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
   AlertDialog,
@@ -16,18 +16,40 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import Header from "@/components/Header";
-import { mockBookings } from "@/data/mockData";
+import { fetchBookings, deleteBooking } from "@/services/bookings";
+import { Spinner } from "@/components/ui/spinner";
+import { format } from "date-fns";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const MyBookings = () => {
   const { toast } = useToast();
-  const [bookings, setBookings] = useState(mockBookings);
+  const queryClient = useQueryClient();
+
+  const {
+    data: bookings,
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
+    queryKey: ["bookings", "self"],
+    queryFn: fetchBookings,
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteBooking,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["bookings", "self"] });
+      queryClient.invalidateQueries({ queryKey: ["bookings", "admin"] });
+      toast({ title: "Booking deleted", description: "Your booking has been removed." });
+    },
+    onError: (mutationError: unknown) => {
+      const message = mutationError instanceof Error ? mutationError.message : "Unable to delete booking";
+      toast({ title: "Delete failed", description: message, variant: "destructive" });
+    },
+  });
 
   const handleDelete = (id: string) => {
-    setBookings(bookings.filter((b) => b.id !== id));
-    toast({
-      title: "Success",
-      description: "Booking deleted successfully",
-    });
+    deleteMutation.mutate(id);
   };
 
   return (
@@ -39,7 +61,20 @@ const MyBookings = () => {
           <p className="text-muted-foreground">View and manage your campground reservations</p>
         </div>
 
-        {bookings.length === 0 ? (
+        {isLoading && (
+          <div className="flex h-48 items-center justify-center">
+            <Spinner label="Loading bookings" />
+          </div>
+        )}
+
+        {isError && (
+          <Alert variant="destructive" className="mb-6">
+            <AlertTitle>Unable to load bookings</AlertTitle>
+            <AlertDescription>{error instanceof Error ? error.message : "Unknown error"}</AlertDescription>
+          </Alert>
+        )}
+
+        {!isLoading && bookings && bookings.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
               <p className="text-muted-foreground mb-4">You don't have any bookings yet</p>
@@ -50,43 +85,42 @@ const MyBookings = () => {
           </Card>
         ) : (
           <div className="grid gap-6">
-            {bookings.map((booking) => (
-              <Card key={booking.id} className="animate-fade-in">
+            {bookings?.map((booking) => (
+              <Card key={booking._id} className="animate-fade-in">
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div>
-                      <CardTitle>{booking.campgroundName}</CardTitle>
+                      <CardTitle>{booking.campground.name}</CardTitle>
                       <CardDescription className="flex items-center gap-2 mt-2">
                         <Calendar className="h-4 w-4" />
-                        {booking.checkIn} to {booking.checkOut} ({booking.nights} {booking.nights === 1 ? 'night' : 'nights'})
+                        {format(new Date(booking.bookingDate), "PPP")}
+                      </CardDescription>
+                      <CardDescription className="flex items-center gap-2 mt-2">
+                        <MapPin className="h-4 w-4" />
+                        {booking.campground.address}, {booking.campground.province}
                       </CardDescription>
                     </div>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="icon">
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="outline" size="icon">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Delete Booking</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Are you sure you want to delete this booking? This action cannot be undone.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDelete(booking.id)}>
-                              Delete
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="outline" size="icon" disabled={deleteMutation.isPending}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete Booking</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to delete this booking? This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleDelete(booking._id)}>
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 </CardHeader>
               </Card>

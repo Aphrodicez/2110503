@@ -6,10 +6,13 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/Header";
+import { useAuth } from "@/hooks/useAuth";
+import { Spinner } from "@/components/ui/spinner";
 
 const Register = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { register: registerUser, isLoading } = useAuth();
   const [formData, setFormData] = useState({
     name: "",
     telephone: "",
@@ -17,8 +20,9 @@ const Register = () => {
     password: "",
     confirmPassword: "",
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (formData.password !== formData.confirmPassword) {
@@ -30,12 +34,22 @@ const Register = () => {
       return;
     }
 
-    // Mock registration
-    toast({
-      title: "Success",
-      description: "Account created successfully!",
-    });
-    navigate("/login");
+    setIsSubmitting(true);
+    try {
+      await registerUser({
+        name: formData.name,
+        telephone: formData.telephone,
+        email: formData.email,
+        password: formData.password,
+      });
+      toast({ title: "Welcome", description: "Account created successfully." });
+      navigate("/campgrounds");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to register";
+      toast({ title: "Registration failed", description: message, variant: "destructive" });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -99,8 +113,8 @@ const Register = () => {
                     onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                   />
                 </div>
-                <Button type="submit" className="w-full">
-                  Register
+                <Button type="submit" className="w-full" disabled={isSubmitting || isLoading}>
+                  {isSubmitting ? <Spinner label="Creating account" /> : "Register"}
                 </Button>
                 <p className="text-center text-sm text-muted-foreground">
                   Already have an account?{" "}

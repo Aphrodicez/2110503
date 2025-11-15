@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { format, startOfToday } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -7,76 +9,102 @@ import { Calendar } from "@/components/ui/calendar";
 import { useToast } from "@/hooks/use-toast";
 import { MapPin, Phone, CreditCard } from "lucide-react";
 import Header from "@/components/Header";
-import { mockCampgrounds, mockBookings, mockReviews } from "@/data/mockData";
-import { addDays, differenceInDays } from "date-fns";
-import ReviewSection from "@/components/ReviewSection";
+import { fetchCampground } from "@/services/campgrounds";
+import { createBooking, fetchBookings } from "@/services/bookings";
+import { Spinner } from "@/components/ui/spinner";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useAuth } from "@/hooks/useAuth";
 
 const BookCampground = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const campground = mockCampgrounds.find((c) => c.id === id);
-  
-  const [checkIn, setCheckIn] = useState<Date>();
-  const [checkOut, setCheckOut] = useState<Date>();
-  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-  
-  // Simulate current user's active bookings
-  const currentUserId = "user1";
-  const userActiveBookings = mockBookings.filter(b => 
-    b.userId === currentUserId && new Date(b.checkIn) >= new Date()
-  );
+  const queryClient = useQueryClient();
+  const [bookingDate, setBookingDate] = useState<Date>();
+  const { user } = useAuth();
 
-  if (!campground) {
-    return <div>Campground not found</div>;
-  }
+  const {
+    data: campground,
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
+    queryKey: ["campground", id],
+    queryFn: () => fetchCampground(id!),
+    enabled: !!id,
+  });
 
-  const nights = checkIn && checkOut ? differenceInDays(checkOut, checkIn) : 0;
+  const {
+    data: myBookings,
+    isLoading: isLoadingBookings,
+  } = useQuery({
+    queryKey: ["bookings", "self"],
+    queryFn: fetchBookings,
+    enabled: !!id,
+  });
+
+  const bookingMutation = useMutation({
+    mutationFn: (date: string) => createBooking(id!, date),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["bookings", "self"] });
+      queryClient.invalidateQueries({ queryKey: ["bookings", "admin"] });
+      toast({ title: "Booking created", description: "Your campsite is reserved." });
+      navigate("/my-bookings");
+    },
+    onError: (mutationError: unknown) => {
+      const message = mutationError instanceof Error ? mutationError.message : "Unable to create booking";
+      toast({ title: "Booking failed", description: message, variant: "destructive" });
+    },
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!checkIn || !checkOut) {
-      toast({
-        title: "Error",
-        description: "Please select check-in and check-out dates",
-        variant: "destructive",
-      });
+    if (!bookingDate || !id) {
+      toast({ title: "Date required", description: "Please pick a booking date.", variant: "destructive" });
       return;
     }
-
-    if (nights !== 1) {
-      toast({
-        title: "Error",
-        description: "You can only book 1 day (1 night) per booking",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (userActiveBookings.length >= 3) {
-      toast({
-        title: "Error",
-        description: "You have reached the maximum of 3 active bookings",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Simulate Stripe payment processing
-    setIsProcessingPayment(true);
-    
-    // Simulate payment delay
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    setIsProcessingPayment(false);
-    
-    toast({
-      title: "Success",
-      description: "Payment successful! Booking created.",
-    });
-    navigate("/my-bookings");
+    await bookingMutation.mutateAsync(bookingDate.toISOString());
   };
+
+  const today = startOfToday();
+  const userActiveBookings = myBookings?.filter(
+    (booking) =>
+      booking.user._id === user?._id && new Date(booking.bookingDate) >= today,
+  );
+  const bookingLimitReached = user?.role !== "admin" && (userActiveBookings?.length || 0) >= 3;
+
+  const placeholderImage = campground
+    ? `https://source.unsplash.com/featured/1000x600/?camping,${encodeURIComponent(campground.province)}`
+    : undefined;
+
+  const isPastDate = (date: Date) => date < today;
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="flex h-[60vh] items-center justify-center">
+          <Spinner label="Loading campground" />
+        </div>
+      </div>
+    );
+  }
+
+  if (isError || !campground) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container mx-auto px-4 py-12">
+          <Alert variant="destructive">
+            <AlertTitle>Unable to load campground</AlertTitle>
+            <AlertDescription>
+              {error instanceof Error ? error.message : "Campground not found"}
+            </AlertDescription>
+          </Alert>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -85,21 +113,25 @@ const BookCampground = () => {
         <div className="max-w-4xl mx-auto space-y-8">
           <Card className="overflow-hidden">
             <img
-              src={campground.image}
+              src={placeholderImage}
               alt={campground.name}
-              className="w-full h-64 object-cover"
+              className="h-64 w-full object-cover"
             />
             <CardHeader>
               <CardTitle className="text-3xl">{campground.name}</CardTitle>
-              <CardDescription className="text-base">{campground.description}</CardDescription>
+              <CardDescription className="text-base">
+                {campground.district}, {campground.province} ({campground.region})
+              </CardDescription>
               <div className="space-y-2 pt-4">
                 <div className="flex items-start gap-2 text-sm text-muted-foreground">
                   <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                  <span>{campground.address}</span>
+                  <span>
+                    {campground.address}, {campground.district}, {campground.province} {campground.postalcode}
+                  </span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Phone className="h-4 w-4" />
-                  <span>{campground.telephone}</span>
+                  <span>{campground.tel || "Contact info unavailable"}</span>
                 </div>
               </div>
             </CardHeader>
@@ -110,78 +142,52 @@ const BookCampground = () => {
                     Booking Rules:
                   </p>
                   <ul className="text-sm text-muted-foreground mt-2 space-y-1">
-                    <li>• You can only book 1 day (1 night) per booking</li>
+                    <li>• Bookings are for a single day</li>
                     <li>• Maximum 3 active bookings per user at a time</li>
-                    <li>• You currently have {userActiveBookings.length} active booking(s)</li>
+                    <li>
+                      • You currently have {userActiveBookings?.length || 0} active booking(s)
+                    </li>
                   </ul>
                 </div>
 
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label>Check-in Date</Label>
-                    <Calendar
-                      mode="single"
-                      selected={checkIn}
-                      onSelect={(date) => {
-                        setCheckIn(date);
-                        if (date) {
-                          setCheckOut(addDays(date, 1));
-                        }
-                      }}
-                      disabled={(date) => date < new Date()}
-                      className="rounded-md border"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Check-out Date (Auto-selected)</Label>
-                    <Calendar
-                      mode="single"
-                      selected={checkOut}
-                      onSelect={setCheckOut}
-                      disabled={(date) => !checkIn || date !== addDays(checkIn, 1)}
-                      className="rounded-md border"
-                    />
-                  </div>
-                </div>
-                
-                {nights > 0 && (
-                  <div className="p-4 bg-accent rounded-md">
-                    <p className="text-sm font-medium text-accent-foreground">
-                      Total nights: {nights} {nights === 1 ? 'night' : 'nights'}
+                <div className="space-y-2">
+                  <Label>Choose booking date</Label>
+                  <Calendar
+                    mode="single"
+                    selected={bookingDate}
+                    onSelect={setBookingDate}
+                    disabled={(date) => isPastDate(date)}
+                    className="rounded-md border"
+                  />
+                  {bookingDate && (
+                    <p className="text-sm text-muted-foreground">
+                      Selected date: {format(bookingDate, "PPP")}
                     </p>
-                    {nights !== 1 && (
-                      <p className="text-sm text-destructive mt-1">
-                        Only 1 night bookings are allowed
-                      </p>
-                    )}
-                  </div>
-                )}
+                  )}
+                </div>
 
                 <Button 
                   type="submit" 
                   className="w-full" 
-                  disabled={!checkIn || !checkOut || nights !== 1 || userActiveBookings.length >= 3 || isProcessingPayment}
+                  disabled={
+                    !bookingDate || bookingMutation.isPending || bookingLimitReached || isLoadingBookings
+                  }
                 >
-                  {isProcessingPayment ? (
-                    <>Processing Payment...</>
+                  {bookingMutation.isPending ? (
+                    <Spinner label="Creating booking" />
                   ) : (
                     <>
                       <CreditCard className="h-4 w-4 mr-2" />
-                      Pay with Stripe & Confirm Booking
+                      Confirm Booking
                     </>
                   )}
                 </Button>
+                {bookingLimitReached && (
+                  <p className="text-sm text-destructive">
+                    You already have 3 active bookings. Please cancel an existing booking before creating a new one.
+                  </p>
+                )}
               </form>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <ReviewSection 
-                campgroundId={id!} 
-                reviews={mockReviews}
-                currentUserId={currentUserId}
-              />
             </CardContent>
           </Card>
         </div>

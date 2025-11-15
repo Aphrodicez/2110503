@@ -1,32 +1,37 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation, Location } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/Header";
+import { useAuth } from "@/hooks/useAuth";
+import { Spinner } from "@/components/ui/spinner";
 
 const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
+  const { login, isLoading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const redirectPath = (location.state as { from?: Location })?.from?.pathname || "/campgrounds";
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Mock login
-    localStorage.setItem("isLoggedIn", "true");
-    localStorage.setItem("isAdmin", isAdmin.toString());
-    
-    toast({
-      title: "Success",
-      description: "Logged in successfully!",
-    });
-    navigate("/campgrounds");
+    setIsSubmitting(true);
+    try {
+      await login({ email, password });
+      toast({ title: "Welcome back", description: "You have logged in successfully." });
+      navigate(redirectPath, { replace: true });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to login";
+      toast({ title: "Login failed", description: message, variant: "destructive" });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -61,18 +66,8 @@ const Login = () => {
                     onChange={(e) => setPassword(e.target.value)}
                   />
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="admin"
-                    checked={isAdmin}
-                    onCheckedChange={(checked) => setIsAdmin(checked as boolean)}
-                  />
-                  <Label htmlFor="admin" className="text-sm font-normal cursor-pointer">
-                    Login as Admin
-                  </Label>
-                </div>
-                <Button type="submit" className="w-full">
-                  Login
+                <Button type="submit" className="w-full" disabled={isSubmitting || isLoading}>
+                  {isSubmitting ? <Spinner label="Signing in" /> : "Login"}
                 </Button>
                 <p className="text-center text-sm text-muted-foreground">
                   Don't have an account?{" "}
