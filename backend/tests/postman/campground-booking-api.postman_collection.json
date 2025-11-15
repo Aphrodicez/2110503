@@ -22,7 +22,8 @@
                 "exec": [
                   "const ts = Date.now();",
                   "pm.environment.set('adminEmail', 'admin_' + ts + '@runner.test');",
-                  "pm.environment.set('adminPassword', 'Admin!' + ts);"
+                  "pm.environment.set('adminPassword', 'Admin!' + ts);",
+                  "pm.environment.set('adminTelephone', '08' + String(ts % 1000000000).padStart(9, '0'));"
                 ],
                 "type": "text/javascript"
               }
@@ -53,7 +54,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Runner Admin\",\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\",\n  \"role\": \"admin\"\n}"
+              "raw": "{\n  \"name\": \"Runner Admin\",\n  \"email\": \"{{adminEmail}}\",\n  \"telephone\": \"{{adminTelephone}}\",\n  \"password\": \"{{adminPassword}}\",\n  \"role\": \"admin\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/auth/register",
@@ -120,7 +121,8 @@
                 "exec": [
                   "const ts = Date.now();",
                   "pm.environment.set('userEmail', 'camper_' + ts + '@runner.test');",
-                  "pm.environment.set('userPassword', 'User!' + ts);"
+                  "pm.environment.set('userPassword', 'User!' + ts);",
+                  "pm.environment.set('userTelephone', '09' + String(ts % 1000000000).padStart(9, '0'));"
                 ],
                 "type": "text/javascript"
               }
@@ -150,7 +152,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Runner Camper\",\n  \"email\": \"{{userEmail}}\",\n  \"password\": \"{{userPassword}}\"\n}"
+              "raw": "{\n  \"name\": \"Runner Camper\",\n  \"email\": \"{{userEmail}}\",\n  \"telephone\": \"{{userTelephone}}\",\n  \"password\": \"{{userPassword}}\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/auth/register",
@@ -667,6 +669,10 @@
       "value": ""
     },
     {
+      "key": "adminTelephone",
+      "value": ""
+    },
+    {
       "key": "adminToken",
       "value": ""
     },
@@ -676,6 +682,10 @@
     },
     {
       "key": "userPassword",
+      "value": ""
+    },
+    {
+      "key": "userTelephone",
       "value": ""
     },
     {
