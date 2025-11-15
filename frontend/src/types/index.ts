@@ -28,6 +28,21 @@ export interface Booking {
   createdAt: string;
 }
 
+export interface Review {
+  _id: string;
+  rating: number;
+  comment: string;
+  campground: Campground | string;
+  user: User;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ReviewInput {
+  rating: number;
+  comment: string;
+}
+
 export interface AuthCredentials {
   email: string;
   password: string;

@@ -10,6 +10,7 @@ const connectDB = require("./config/db");
 
 const campgrounds = require("./routes/campgrounds");
 const bookings = require("./routes/bookings");
+const reviews = require("./routes/reviews");
 const auth = require("./routes/auth");
 
 dotenv.config({ path: "./config/config.env" });
@@ -74,6 +75,7 @@ app.use(cookieParser());
 
 app.use("/api/v1/campgrounds", campgrounds);
 app.use("/api/v1/bookings", bookings);
+app.use("/api/v1/reviews", reviews);
 app.use("/api/v1/auth", auth);
 
 const port = process.env.PORT || 5000;

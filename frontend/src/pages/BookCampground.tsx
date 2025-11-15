@@ -14,6 +14,7 @@ import { createBooking, fetchBookings } from "@/services/bookings";
 import { Spinner } from "@/components/ui/spinner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useAuth } from "@/hooks/useAuth";
+import ReviewSection from "@/components/ReviewSection";
 
 const BookCampground = () => {
   const { id } = useParams();
@@ -188,6 +189,12 @@ const BookCampground = () => {
                   </p>
                 )}
               </form>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <ReviewSection campgroundId={campground._id} />
             </CardContent>
           </Card>
         </div>
