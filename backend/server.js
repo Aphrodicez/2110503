@@ -3,8 +3,8 @@ const dotenv = require('dotenv');
 const cookieParser = require('cookie-parser');
 const connectDB = require('./config/db');
 
-const hospitals = require('./routes/hospitals');
-const appointments = require('./routes/appointments');
+const campgrounds = require('./routes/campgrounds');
+const bookings = require('./routes/bookings');
 const auth = require('./routes/auth');
 
 dotenv.config({ path: './config/config.env' });
@@ -19,8 +19,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-app.use('/api/v1/hospitals', hospitals);
-app.use('/api/v1/appointments', appointments);
+app.use('/api/v1/campgrounds', campgrounds);
+app.use('/api/v1/bookings', bookings);
 app.use('/api/v1/auth', auth);
 
 const port = process.env.PORT || 5000;
