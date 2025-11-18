@@ -7,6 +7,7 @@ import React, { useState } from "react";
 
 const CheckoutPageCard = ({ amount }: { amount: number }) => {
   const stripe = useStripe();
+  const elements = useElements();
   const [errorMessage, setErrorMessage] = useState<string>();
   const [loading, setLoading] = useState(false);
 
