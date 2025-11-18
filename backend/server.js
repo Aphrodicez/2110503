@@ -8,11 +8,12 @@ const rateLimit = require("express-rate-limit");
 
 const connectDB = require("./config/db");
 
+dotenv.config({ path: "./config/config.env" });
+
 const campgrounds = require("./routes/campgrounds");
 const bookings = require("./routes/bookings");
 const auth = require("./routes/auth");
-
-dotenv.config({ path: "./config/config.env" });
+const paymentRoutes = require("./routes/paymentRoutes");
 
 connectDB();
 
@@ -75,6 +76,7 @@ app.use(cookieParser());
 app.use("/api/v1/campgrounds", campgrounds);
 app.use("/api/v1/bookings", bookings);
 app.use("/api/v1/auth", auth);
+app.use("/api/v1/payments", paymentRoutes);
 
 const port = process.env.PORT || 5000;
 

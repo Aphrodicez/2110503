@@ -2,12 +2,13 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Tent, MapPin, Calendar, Shield } from "lucide-react";
 import Header from "@/components/Header";
+import CheckoutSection from "@/components/CheckoutSection";
 
 const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      
+
       <section className="relative py-20 bg-gradient-to-b from-primary/10 to-background">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center">
@@ -16,7 +17,8 @@ const Index = () => {
               Discover Your Next Adventure
             </h1>
             <p className="text-xl text-muted-foreground mb-8">
-              Book your perfect campground and reconnect with nature. Easy booking, amazing locations.
+              Book your perfect campground and reconnect with nature. Easy
+              booking, amazing locations.
             </p>
             <div className="flex gap-4 justify-center">
               <Button asChild size="lg">
@@ -48,7 +50,8 @@ const Index = () => {
               </div>
               <h3 className="text-xl font-semibold mb-2">Easy Booking</h3>
               <p className="text-muted-foreground">
-                Simple reservation system with flexible dates and instant confirmation
+                Simple reservation system with flexible dates and instant
+                confirmation
               </p>
             </div>
             <div className="text-center">
@@ -61,6 +64,13 @@ const Index = () => {
               </p>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Stripe checkout section – can move to its own page later if you want */}
+      <section className="py-10">
+        <div className="container mx-auto px-4">
+          <CheckoutSection amount={78800} />
         </div>
       </section>
     </div>
