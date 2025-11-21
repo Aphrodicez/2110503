@@ -1,3 +1,4 @@
+import { FormEvent, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Tent, MapPin, Calendar, Shield } from "lucide-react";
@@ -5,6 +6,39 @@ import Header from "@/components/Header";
 import CheckoutSection from "@/components/CheckoutSection";
 
 const Index = () => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
+
+  const handleCheckout = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setCheckoutError(null);
+    setIsSubmitting(true);
+
+    try {
+      const res = await fetch(
+        "http://localhost:5000/api/v1/payments/create-checkout-session",
+        {
+          method: "POST",
+        }
+      );
+
+      if (!res.ok) {
+        throw new Error(`Checkout session failed with ${res.status}`);
+      }
+
+      const data = await res.json();
+      if (!data?.url) {
+        throw new Error("Missing redirect URL in checkout session response");
+      }
+
+      window.location.href = data.url;
+    } catch (error) {
+      console.error("Checkout error:", error);
+      setCheckoutError("Unable to start checkout. Please try again.");
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -68,9 +102,22 @@ const Index = () => {
       </section>
 
       {/* Stripe checkout section – can move to its own page later if you want */}
-      <section className="py-10">
+      {/* <section className="py-10">
         <div className="container mx-auto px-4">
           <CheckoutSection amount={78800} />
+        </div>
+      </section> */}
+
+      <section className="py-10">
+        <div className="container mx-auto px-4">
+          <form onSubmit={handleCheckout} className="flex flex-col gap-4">
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Redirecting…" : "Checkout"}
+            </Button>
+            {checkoutError ? (
+              <p className="text-sm text-destructive">{checkoutError}</p>
+            ) : null}
+          </form>
         </div>
       </section>
     </div>
