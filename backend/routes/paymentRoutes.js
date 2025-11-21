@@ -210,7 +210,11 @@ router.post("/finalize-booking", protect, async (req, res) => {
         user: req.user.id,
         campground: campgroundId,
         bookingDate: normalizedDate,
+        paymentStatus: "paid",
       });
+    } else if (booking.paymentStatus !== "paid") {
+      booking.paymentStatus = "paid";
+      await booking.save();
     }
 
     const populatedBooking = await Booking.findById(booking._id).populate({

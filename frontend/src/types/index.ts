@@ -25,6 +25,7 @@ export interface User {
 export interface Booking {
   _id: string;
   bookingDate: string;
+  paymentStatus?: "pending" | "paid";
   campground: Campground;
   user: User;
   createdAt: string;

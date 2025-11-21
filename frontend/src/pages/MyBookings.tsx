@@ -28,8 +28,9 @@ import { Spinner } from "@/components/ui/spinner";
 import { format } from "date-fns";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { formatPrice } from "@/lib/utils";
-import type { Campground } from "@/types";
-import { finalizeCheckoutBooking } from "@/services/payments";
+import type { Booking as BookingType, Campground } from "@/types";
+import { createCheckoutSession, finalizeCheckoutBooking } from "@/services/payments";
+import { Badge } from "@/components/ui/badge";
 
 const MyBookings = () => {
   const { toast } = useToast();
@@ -37,6 +38,7 @@ const MyBookings = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [showSuccessAlert, setShowSuccessAlert] = useState(false);
   const [pendingSessionId, setPendingSessionId] = useState<string | null>(null);
+  const [payingBookingId, setPayingBookingId] = useState<string | null>(null);
 
   const formatLocation = (campground: Campground) => {
     const segments = [
@@ -141,6 +143,44 @@ const MyBookings = () => {
     deleteMutation.mutate(id);
   };
 
+  const checkoutMutation = useMutation({
+    mutationFn: createCheckoutSession,
+    onSuccess: (data) => {
+      if (!data?.url) {
+        throw new Error("Missing redirect URL for checkout session");
+      }
+      window.location.href = data.url;
+    },
+    onError: (mutationError: unknown) => {
+      const message =
+        mutationError instanceof Error
+          ? mutationError.message
+          : "Unable to start payment";
+      toast({
+        title: "Payment failed",
+        description: message,
+        variant: "destructive",
+      });
+    },
+    onSettled: () => setPayingBookingId(null),
+  });
+
+  const handlePay = (booking: BookingType) => {
+    if (!booking.campground?._id) {
+      toast({
+        title: "Missing campground",
+        description: "We can't start payment for this booking right now.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setPayingBookingId(booking._id);
+    checkoutMutation.mutate({
+      bookingDate: booking.bookingDate,
+      campgroundId: booking.campground._id,
+    });
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -230,35 +270,62 @@ const MyBookings = () => {
                         {formatPrice(booking.campground.price) ??
                           "Price unavailable"}
                       </CardDescription>
-                    </div>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          disabled={deleteMutation.isPending}
+                      <CardDescription className="mt-2">
+                        <Badge
+                          variant={
+                            booking.paymentStatus === "paid"
+                              ? "secondary"
+                              : "destructive"
+                          }
                         >
-                          <Trash2 className="h-4 w-4" />
+                          {booking.paymentStatus === "paid"
+                            ? "Paid"
+                            : "Payment pending"}
+                        </Badge>
+                      </CardDescription>
+                    </div>
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                      {booking.paymentStatus !== "paid" && (
+                        <Button
+                          variant="default"
+                          disabled={checkoutMutation.isPending}
+                          onClick={() => handlePay(booking)}
+                        >
+                          {checkoutMutation.isPending &&
+                          payingBookingId === booking._id
+                            ? "Redirecting..."
+                            : "Pay Now"}
                         </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Delete Booking</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Are you sure you want to delete this booking? This
-                            action cannot be undone.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={() => handleDelete(booking._id)}
+                      )}
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            disabled={deleteMutation.isPending}
                           >
-                            Delete
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Booking</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to delete this booking?
+                              This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => handleDelete(booking._id)}
+                            >
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
                   </div>
                 </CardHeader>
               </Card>

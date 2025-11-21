@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { useParams } from "react-router-dom";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useNavigate, useParams } from "react-router-dom";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format, startOfToday } from "date-fns";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,16 +16,17 @@ import { useToast } from "@/hooks/use-toast";
 import { MapPin, Phone, CreditCard } from "lucide-react";
 import Header from "@/components/Header";
 import { fetchCampground } from "@/services/campgrounds";
-import { fetchBookings } from "@/services/bookings";
+import { createBooking, fetchBookings } from "@/services/bookings";
 import { Spinner } from "@/components/ui/spinner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useAuth } from "@/hooks/useAuth";
 import { formatPrice } from "@/lib/utils";
-import { createCheckoutSession } from "@/services/payments";
 
 const BookCampground = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [bookingDate, setBookingDate] = useState<Date>();
   const { user } = useAuth();
 
@@ -46,23 +47,22 @@ const BookCampground = () => {
     enabled: !!id,
   });
 
-  const checkoutMutation = useMutation({
-    mutationFn: async (payload: {
-      bookingDate: string;
-      campgroundId: string;
-    }) => {
-      const data = await createCheckoutSession(payload);
-      if (!data?.url) {
-        throw new Error("Missing redirect URL in checkout session response");
-      }
-
-      window.location.href = data.url;
+  const bookingMutation = useMutation({
+    mutationFn: (date: string) => createBooking(id!, date),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["bookings", "self"] });
+      queryClient.invalidateQueries({ queryKey: ["bookings", "admin"] });
+      toast({
+        title: "Booking created",
+        description: "Your campsite is reserved. Payment pending.",
+      });
+      navigate("/my-bookings");
     },
     onError: (mutationError: unknown) => {
       const message =
         mutationError instanceof Error
           ? mutationError.message
-          : "Unable to confirm booking";
+          : "Unable to create booking";
       toast({
         title: "Booking failed",
         description: message,
@@ -81,10 +81,7 @@ const BookCampground = () => {
       });
       return;
     }
-    await checkoutMutation.mutateAsync({
-      bookingDate: bookingDate.toISOString(),
-      campgroundId: id!,
-    });
+    await bookingMutation.mutateAsync(bookingDate.toISOString());
   };
 
   const today = startOfToday();
@@ -209,13 +206,13 @@ const BookCampground = () => {
                   className="w-full"
                   disabled={
                     !bookingDate ||
-                    checkoutMutation.isPending ||
+                    bookingMutation.isPending ||
                     bookingLimitReached ||
                     isLoadingBookings
                   }
                 >
-                  {checkoutMutation.isPending ? (
-                    <Spinner label="Processing booking" />
+                  {bookingMutation.isPending ? (
+                    <Spinner label="Creating booking" />
                   ) : (
                     <>
                       <CreditCard className="h-4 w-4 mr-2" />

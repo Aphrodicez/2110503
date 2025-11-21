@@ -5,6 +5,11 @@ const BookingSchema = new mongoose.Schema({
         type: Date,
         required: true
     },
+    paymentStatus: {
+        type: String,
+        enum: ["pending", "paid"],
+        default: "pending"
+    },
     user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
