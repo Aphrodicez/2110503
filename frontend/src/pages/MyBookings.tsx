@@ -1,8 +1,15 @@
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, MapPin, Trash2 } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Calendar, MapPin, Trash2, CreditCard } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
   AlertDialog,
@@ -20,10 +27,27 @@ import { fetchBookings, deleteBooking } from "@/services/bookings";
 import { Spinner } from "@/components/ui/spinner";
 import { format } from "date-fns";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { formatPrice } from "@/lib/utils";
+import type { Campground } from "@/types";
+import { finalizeCheckoutBooking } from "@/services/payments";
 
 const MyBookings = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [showSuccessAlert, setShowSuccessAlert] = useState(false);
+  const [pendingSessionId, setPendingSessionId] = useState<string | null>(null);
+
+  const formatLocation = (campground: Campground) => {
+    const segments = [
+      campground.address,
+      campground.district,
+      campground.province,
+      campground.postalcode,
+    ].filter(Boolean);
+
+    return segments.join(", ");
+  };
 
   const {
     data: bookings,
@@ -35,16 +59,81 @@ const MyBookings = () => {
     queryFn: fetchBookings,
   });
 
+  const finalizeCheckoutMutation = useMutation({
+    mutationFn: finalizeCheckoutBooking,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["bookings", "self"] });
+      queryClient.invalidateQueries({ queryKey: ["bookings", "admin"] });
+      setShowSuccessAlert(true);
+    },
+    onError: (mutationError: unknown) => {
+      const message =
+        mutationError instanceof Error
+          ? mutationError.message
+          : "We couldn't confirm your payment";
+      toast({
+        title: "Booking confirmation failed",
+        description: message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  useEffect(() => {
+    const statusParam = searchParams.get("status");
+    if (statusParam !== "success") {
+      return;
+    }
+
+    const sessionId = searchParams.get("session_id");
+
+    const params = new URLSearchParams(searchParams);
+    params.delete("status");
+    params.delete("session_id");
+    setSearchParams(params, { replace: true });
+
+    if (!sessionId) {
+      toast({
+        title: "Missing checkout reference",
+        description: "We can't finalize this booking without a session id.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setPendingSessionId(sessionId);
+  }, [searchParams, setSearchParams, toast]);
+
+  useEffect(() => {
+    if (!pendingSessionId || finalizeCheckoutMutation.isPending) {
+      return;
+    }
+
+    finalizeCheckoutMutation.mutate(pendingSessionId, {
+      onSettled: () => setPendingSessionId(null),
+    });
+  }, [finalizeCheckoutMutation, pendingSessionId]);
+
   const deleteMutation = useMutation({
     mutationFn: deleteBooking,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["bookings", "self"] });
       queryClient.invalidateQueries({ queryKey: ["bookings", "admin"] });
-      toast({ title: "Booking deleted", description: "Your booking has been removed." });
+      toast({
+        title: "Booking deleted",
+        description: "Your booking has been removed.",
+      });
     },
     onError: (mutationError: unknown) => {
-      const message = mutationError instanceof Error ? mutationError.message : "Unable to delete booking";
-      toast({ title: "Delete failed", description: message, variant: "destructive" });
+      const message =
+        mutationError instanceof Error
+          ? mutationError.message
+          : "Unable to delete booking";
+      toast({
+        title: "Delete failed",
+        description: message,
+        variant: "destructive",
+      });
     },
   });
 
@@ -57,9 +146,41 @@ const MyBookings = () => {
       <Header />
       <div className="container mx-auto px-4 py-12">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-foreground mb-2">My Bookings</h1>
-          <p className="text-muted-foreground">View and manage your campground reservations</p>
+          <h1 className="text-4xl font-bold text-foreground mb-2">
+            My Bookings
+          </h1>
+          <p className="text-muted-foreground">
+            View and manage your campground reservations
+          </p>
         </div>
+
+        {finalizeCheckoutMutation.isPending && (
+          <Alert className="mb-6 border border-primary/30 bg-primary/5">
+            <AlertTitle>Finalizing your booking</AlertTitle>
+            <AlertDescription>
+              Hang tight while we confirm your payment with Stripe.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {showSuccessAlert && (
+          <Alert className="mb-6 flex flex-col gap-4 border-emerald-400/80 bg-emerald-50 text-emerald-900 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <AlertTitle>Booking confirmed</AlertTitle>
+              <AlertDescription>
+                Your reservation is confirmed.
+              </AlertDescription>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="self-start border border-transparent px-3 text-emerald-900 hover:text-emerald-900"
+              onClick={() => setShowSuccessAlert(false)}
+            >
+              Dismiss
+            </Button>
+          </Alert>
+        )}
 
         {isLoading && (
           <div className="flex h-48 items-center justify-center">
@@ -70,14 +191,18 @@ const MyBookings = () => {
         {isError && (
           <Alert variant="destructive" className="mb-6">
             <AlertTitle>Unable to load bookings</AlertTitle>
-            <AlertDescription>{error instanceof Error ? error.message : "Unknown error"}</AlertDescription>
+            <AlertDescription>
+              {error instanceof Error ? error.message : "Unknown error"}
+            </AlertDescription>
           </Alert>
         )}
 
         {!isLoading && bookings && bookings.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
-              <p className="text-muted-foreground mb-4">You don't have any bookings yet</p>
+              <p className="text-muted-foreground mb-4">
+                You don't have any bookings yet
+              </p>
               <Button asChild>
                 <Link to="/campgrounds">Browse Campgrounds</Link>
               </Button>
@@ -97,12 +222,22 @@ const MyBookings = () => {
                       </CardDescription>
                       <CardDescription className="flex items-center gap-2 mt-2">
                         <MapPin className="h-4 w-4" />
-                        {booking.campground.address}, {booking.campground.province}
+                        {formatLocation(booking.campground) ||
+                          "Location unavailable"}
+                      </CardDescription>
+                      <CardDescription className="flex items-center gap-2 mt-2">
+                        <CreditCard className="h-4 w-4" />
+                        {formatPrice(booking.campground.price) ??
+                          "Price unavailable"}
                       </CardDescription>
                     </div>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button variant="outline" size="icon" disabled={deleteMutation.isPending}>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          disabled={deleteMutation.isPending}
+                        >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </AlertDialogTrigger>
@@ -110,12 +245,15 @@ const MyBookings = () => {
                         <AlertDialogHeader>
                           <AlertDialogTitle>Delete Booking</AlertDialogTitle>
                           <AlertDialogDescription>
-                            Are you sure you want to delete this booking? This action cannot be undone.
+                            Are you sure you want to delete this booking? This
+                            action cannot be undone.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                           <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => handleDelete(booking._id)}>
+                          <AlertDialogAction
+                            onClick={() => handleDelete(booking._id)}
+                          >
                             Delete
                           </AlertDialogAction>
                         </AlertDialogFooter>

@@ -1,6 +1,9 @@
 // backend/routes/paymentRoutes.js
 const express = require("express");
 const Stripe = require("stripe");
+const Campground = require("../models/Campground");
+const Booking = require("../models/Booking");
+const { protect } = require("../middleware/auth");
 
 const router = express.Router();
 
@@ -35,33 +38,198 @@ router.post("/create-payment-intent", async (req, res) => {
   }
 });
 
-router.post("/create-checkout-session", async (req, res) => {
-  const session = await stripe.checkout.sessions.create({
-    submit_type: "book",
-    line_items: [
-      {
-        price_data: {
-          currency: "thb",
-          product_data: {
-            name: "Skibidi",
-            images: [
-              "https://static.wikitide.net/skibiditoiletwiki/5/5c/Episode_1_thumbnail.png",
-            ],
-          },
-          unit_amount: 19900,
-        },
-        quantity: 1,
-      },
-    ],
-    mode: "payment",
-    success_url: "http://localhost:4242/success",
-    payment_intent_data: {
-      receipt_email: "chayanin15632@gmail.com",
-    },
-    payment_method_types: ["card"],
-  });
+const ensureUrlString = (rawUrl, fallbackUrl) => {
+  try {
+    return new URL(rawUrl || fallbackUrl).toString();
+  } catch (err) {
+    console.warn("Invalid Stripe redirect URL, using fallback", err);
+    return new URL(fallbackUrl).toString();
+  }
+};
 
-  return res.json({ url: session.url });
+const ensureStatusParam = (href, statusValue) => {
+  if (!statusValue) return href;
+  const url = new URL(href);
+  if (!url.searchParams.has("status")) {
+    url.searchParams.set("status", statusValue);
+  }
+  return url.toString();
+};
+
+const ensureSessionPlaceholder = (href) => {
+  const url = new URL(href);
+  if (url.searchParams.has("session_id")) {
+    return href;
+  }
+  const [base, hash] = href.split("#");
+  const separator = base.includes("?") ? "&" : "?";
+  return (
+    `${base}${separator}session_id={CHECKOUT_SESSION_ID}` +
+    (hash ? `#${hash}` : "")
+  );
+};
+
+router.post("/create-checkout-session", protect, async (req, res) => {
+  try {
+    const { campgroundId, bookingDate, customerEmail } = req.body || {};
+
+    if (!campgroundId || !bookingDate) {
+      return res
+        .status(400)
+        .json({ error: "campgroundId and bookingDate are required" });
+    }
+
+    const campground = await Campground.findById(campgroundId);
+    if (!campground) {
+      return res.status(404).json({ error: "Campground not found" });
+    }
+
+    if (typeof campground.price !== "number") {
+      return res
+        .status(400)
+        .json({ error: "Campground price is not configured" });
+    }
+
+    const unitAmount = Math.max(0, Math.round(campground.price * 100));
+    const imageUrl =
+      campground.image ||
+      `https://source.unsplash.com/featured/800x600/?camping,${encodeURIComponent(
+        campground.province
+      )}`;
+
+    const successUrl = ensureSessionPlaceholder(
+      ensureStatusParam(
+        ensureUrlString(
+          process.env.STRIPE_SUCCESS_URL,
+          "http://localhost:8080/my-bookings"
+        ),
+        "success"
+      )
+    );
+    const cancelUrl = ensureStatusParam(
+      ensureUrlString(
+        process.env.STRIPE_CANCEL_URL,
+        `http://localhost:8080/book/${campgroundId}`
+      ),
+      "cancelled"
+    );
+
+    const metadata = {
+      campgroundId,
+      bookingDate,
+      campgroundName: campground.name,
+      userId: req.user.id,
+    };
+
+    const session = await stripe.checkout.sessions.create({
+      submit_type: "book",
+      line_items: [
+        {
+          price_data: {
+            currency: "thb",
+            product_data: {
+              name: `${campground.name} booking`,
+              description: `${campground.district}, ${
+                campground.province
+              } — ${new Date(bookingDate).toDateString()}`,
+              images: imageUrl ? [imageUrl] : undefined,
+            },
+            unit_amount: unitAmount,
+          },
+          quantity: 1,
+        },
+      ],
+      mode: "payment",
+      success_url: successUrl,
+      cancel_url: cancelUrl,
+      payment_method_types: ["card"],
+      customer_email: req.user?.email || customerEmail || undefined,
+      metadata,
+    });
+
+    return res.json({ url: session.url });
+  } catch (error) {
+    console.error("Stripe checkout error:", error);
+    return res.status(500).json({ error: "Unable to create checkout session" });
+  }
+});
+
+router.post("/finalize-booking", protect, async (req, res) => {
+  try {
+    const { sessionId } = req.body || {};
+
+    if (!sessionId) {
+      return res.status(400).json({ error: "sessionId is required" });
+    }
+
+    let session;
+    try {
+      session = await stripe.checkout.sessions.retrieve(sessionId);
+    } catch (err) {
+      console.error("Stripe session retrieval failed", err);
+      return res.status(400).json({ error: "Invalid checkout session" });
+    }
+
+    if (session.payment_status !== "paid" && session.status !== "complete") {
+      return res.status(400).json({ error: "Checkout session not paid" });
+    }
+
+    const { campgroundId, bookingDate, userId } = session.metadata || {};
+
+    if (!campgroundId || !bookingDate || !userId) {
+      return res
+        .status(400)
+        .json({ error: "Session metadata incomplete for booking" });
+    }
+
+    if (userId !== req.user.id) {
+      return res
+        .status(403)
+        .json({ error: "Checkout session does not belong to this user" });
+    }
+
+    const normalizedDate = new Date(bookingDate);
+    if (Number.isNaN(normalizedDate.getTime())) {
+      return res.status(400).json({ error: "Invalid booking date" });
+    }
+
+    const campground = await Campground.findById(campgroundId);
+    if (!campground) {
+      return res.status(404).json({ error: "Campground not found" });
+    }
+
+    let booking = await Booking.findOne({
+      user: req.user.id,
+      campground: campgroundId,
+      bookingDate: normalizedDate,
+    });
+    const hadExistingBooking = Boolean(booking);
+
+    if (!booking) {
+      booking = await Booking.create({
+        user: req.user.id,
+        campground: campgroundId,
+        bookingDate: normalizedDate,
+      });
+    }
+
+    const populatedBooking = await Booking.findById(booking._id).populate({
+      path: "campground",
+      select:
+        "name address district province postalcode region tel image price",
+    });
+
+    return res.status(200).json({
+      success: true,
+      alreadyExists: hadExistingBooking,
+      data: populatedBooking,
+    });
+  } catch (error) {
+    console.error("Finalize booking error:", error);
+    return res
+      .status(500)
+      .json({ error: "Unable to finalize booking for this session" });
+  }
 });
 
 module.exports = router;

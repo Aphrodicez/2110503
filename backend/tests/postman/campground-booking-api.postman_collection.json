@@ -296,7 +296,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"{{campgroundName}}\",\n  \"address\": \"42 Runner Road\",\n  \"district\": \"Sample District\",\n  \"province\": \"Sample Province\",\n  \"postalcode\": \"12345\",\n  \"tel\": \"02-1234567\",\n  \"region\": \"Central\"\n}"
+              "raw": "{\n  \"name\": \"{{campgroundName}}\",\n  \"address\": \"42 Runner Road\",\n  \"district\": \"Sample District\",\n  \"province\": \"Sample Province\",\n  \"postalcode\": \"12345\",\n  \"tel\": \"02-1234567\",\n  \"region\": \"Central\",\n \"image\": \"https://example.com/image.jpg\",\n  \"price\": 50\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/campgrounds",

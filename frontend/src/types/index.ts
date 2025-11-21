@@ -7,6 +7,8 @@ export interface Campground {
   postalcode: string;
   tel?: string;
   region: string;
+  image?: string;
+  price?: number;
   createdAt?: string;
   bookings?: Booking[];
 }
