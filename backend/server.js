@@ -15,6 +15,7 @@ const campgrounds = require("./routes/campgrounds");
 const bookings = require("./routes/bookings");
 const auth = require("./routes/auth");
 const paymentRoutes = require("./routes/paymentRoutes");
+const reviews = require("./routes/reviews");
 
 connectDB();
 
@@ -79,6 +80,7 @@ app.use(cookieParser());
 
 app.use("/api/v1/campgrounds", campgrounds);
 app.use("/api/v1/bookings", bookings);
+app.use("/api/v1/reviews", reviews);
 app.use("/api/v1/auth", auth);
 app.use("/api/v1/payments", paymentRoutes);
 

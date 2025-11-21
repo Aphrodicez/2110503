@@ -1,4 +1,5 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api/v1";
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api/v1";
 export const AUTH_TOKEN_KEY = "campbook_token";
 
 interface ApiFetchOptions extends RequestInit {
@@ -13,11 +14,15 @@ export interface ApiResponse<T> {
   pagination?: unknown;
   token?: string;
   message?: string;
+  meta?: unknown;
 }
 
 export interface ApiListResponse<T> extends ApiResponse<T[]> {}
 
-export const apiFetch = async <T>(path: string, options: ApiFetchOptions = {}): Promise<T> => {
+export const apiFetch = async <T>(
+  path: string,
+  options: ApiFetchOptions = {}
+): Promise<T> => {
   const headers = new Headers(options.headers || {});
   if (options.json !== undefined) {
     headers.set("Content-Type", "application/json");
@@ -31,7 +36,8 @@ export const apiFetch = async <T>(path: string, options: ApiFetchOptions = {}): 
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
     headers,
-    body: options.json !== undefined ? JSON.stringify(options.json) : options.body,
+    body:
+      options.json !== undefined ? JSON.stringify(options.json) : options.body,
     credentials: "include",
   });
 
@@ -43,7 +49,8 @@ export const apiFetch = async <T>(path: string, options: ApiFetchOptions = {}): 
   }
 
   if (!response.ok) {
-    const message = (payload as { message?: string })?.message || "Request failed";
+    const message =
+      (payload as { message?: string })?.message || "Request failed";
     throw new Error(message);
   }
 

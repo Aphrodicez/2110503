@@ -44,6 +44,17 @@ const CampgroundSchema = new mongoose.Schema(
       min: [1, "Price must be a positive value"],
       required: [true, "Please add a price"],
     },
+    averageRating: {
+      type: Number,
+      min: 0,
+      max: 5,
+      default: 0,
+    },
+    reviewsCount: {
+      type: Number,
+      min: 0,
+      default: 0,
+    },
   },
   {
     toJSON: { virtuals: true },
@@ -53,6 +64,13 @@ const CampgroundSchema = new mongoose.Schema(
 
 CampgroundSchema.virtual("bookings", {
   ref: "Booking",
+  localField: "_id",
+  foreignField: "campground",
+  justOne: false,
+});
+
+CampgroundSchema.virtual("reviews", {
+  ref: "Review",
   localField: "_id",
   foreignField: "campground",
   justOne: false,
