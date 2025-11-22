@@ -1,0 +1,33 @@
+@startuml
+participant Server as ":server" <<javaScript>>
+participant RouterA as ":auth" <<router>>
+participant ControllerA as ":auth" <<controllers>>
+participant ModelU as ":User" <<model>>
+participant DB as ":Database" <<MongoDB>>
+
+note left of Server: Register (POST)
+[-> Server: req.post('/auth/register')
+activate Server
+Server -> RouterA: app.use('/auth', auth)
+activate RouterA
+RouterA -> ControllerA: register
+activate ControllerA
+ControllerA -> ModelU: create(req.body)
+activate ModelU
+ModelU -> ModelU: validate(req.body)
+alt Validation Failed
+    ModelU --> ControllerA: error
+    ControllerA --> Server: response (400)
+else Validation Passed
+    ModelU -> DB: UserSchema
+    activate DB
+    DB --> ModelU: user
+    deactivate DB
+    ModelU --> ControllerA: user
+    ControllerA --> Server: response (200)
+end
+deactivate ModelU
+deactivate ControllerA
+Server -->]: response
+deactivate Server
+@enduml

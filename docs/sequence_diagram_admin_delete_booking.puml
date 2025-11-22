@@ -1,0 +1,40 @@
+@startuml
+participant Server as ":server" <<javaScript>>
+participant RouterB as ":bookings" <<router>>
+participant ControllerB as ":bookings" <<controllers>>
+participant ModelB as ":Booking" <<model>>
+participant DB as ":Database" <<MongoDB>>
+
+note left of Server: Admin Delete Any Booking (DELETE)
+[-> Server: req.delete('/bookings/:id')
+activate Server
+Server -> RouterB: app.use('/bookings', bookings)
+activate RouterB
+RouterB -> ControllerB: deleteBooking
+activate ControllerB
+ControllerB -> ModelB: findById(id)
+activate ModelB
+ModelB -> DB: BookingSchema
+activate DB
+DB --> ModelB: booking
+deactivate DB
+ModelB --> ControllerB: booking
+deactivate ModelB
+
+alt role == 'admin'
+    ControllerB -> ModelB: findByIdAndDelete(id)
+    activate ModelB
+    ModelB -> DB: BookingSchema
+    activate DB
+    DB --> ModelB: deletedBooking
+    deactivate DB
+    ModelB --> ControllerB: deletedBooking
+    deactivate ModelB
+    ControllerB --> Server: response (200)
+else Unauthorized
+    ControllerB --> Server: response (401)
+end
+deactivate ControllerB
+Server -->]: response
+deactivate Server
+@enduml

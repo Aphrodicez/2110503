@@ -1,0 +1,28 @@
+usecaseDiagram
+    actor "User" as User
+    actor "Admin" as Admin
+
+    package "Campground Booking System" {
+        usecase "Register" as UC1
+        usecase "Log In" as UC2
+        usecase "Log Out" as UC3
+        usecase "Book Campground" as UC4
+        usecase "View Own Bookings" as UC5
+        usecase "Edit Own Bookings" as UC6
+        usecase "Delete Own Bookings" as UC7
+        usecase "View Any Bookings" as UC8
+        usecase "Edit Any Bookings" as UC9
+        usecase "Delete Any Bookings" as UC10
+    }
+
+    User --> UC1
+    User --> UC2
+    User --> UC3
+    User --> UC4
+    User --> UC5
+    User --> UC6
+    User --> UC7
+
+    Admin --> UC8
+    Admin --> UC9
+    Admin --> UC10

@@ -1,0 +1,27 @@
+@startuml
+participant Server as ":server" <<javaScript>>
+participant RouterB as ":bookings" <<router>>
+participant ControllerB as ":bookings" <<controllers>>
+participant ModelB as ":Booking" <<model>>
+participant DB as ":Database" <<MongoDB>>
+
+note left of Server: Admin View Any Booking (GET)
+[-> Server: req.get('/bookings')
+activate Server
+Server -> RouterB: app.use('/bookings', bookings)
+activate RouterB
+RouterB -> ControllerB: getBookings
+activate ControllerB
+ControllerB -> ModelB: find()
+activate ModelB
+ModelB -> DB: BookingSchema
+activate DB
+DB --> ModelB: allBookings
+deactivate DB
+ModelB --> ControllerB: allBookings
+deactivate ModelB
+ControllerB --> Server: response
+deactivate ControllerB
+Server -->]: response
+deactivate Server
+@enduml

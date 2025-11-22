@@ -1,0 +1,43 @@
+@startuml
+participant Server as ":server" <<javaScript>>
+participant RouterC as ":campgrounds" <<router>>
+participant RouterB as ":bookings" <<router>>
+participant ControllerB as ":bookings" <<controllers>>
+participant ModelB as ":Booking" <<model>>
+participant DB as ":Database" <<MongoDB>>
+
+note left of Server: Book Campground (POST)
+[-> Server: req.post('/campgrounds/:id/bookings')
+activate Server
+Server -> RouterC: app.use('/campgrounds', campgrounds)
+activate RouterC
+RouterC -> RouterB: router.use('/:campgroundId/bookings', bookings)
+activate RouterB
+RouterB -> ControllerB: addBooking
+activate ControllerB
+ControllerB -> ModelB: find({user: req.user.id})
+activate ModelB
+ModelB -> DB: BookingSchema
+activate DB
+DB --> ModelB: existingBookings
+deactivate DB
+ModelB --> ControllerB: existingBookings
+deactivate ModelB
+
+alt existingBookings.length >= 3 && role != 'admin'
+    ControllerB --> Server: response (400)
+else Condition Passed
+    ControllerB -> ModelB: create(req.body)
+    activate ModelB
+    ModelB -> DB: BookingSchema
+    activate DB
+    DB --> ModelB: booking
+    deactivate DB
+    ModelB --> ControllerB: booking
+    deactivate ModelB
+    ControllerB --> Server: response (200)
+end
+deactivate ControllerB
+Server -->]: response
+deactivate Server
+@enduml

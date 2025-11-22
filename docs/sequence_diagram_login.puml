@@ -1,0 +1,27 @@
+@startuml
+participant Server as ":server" <<javaScript>>
+participant RouterA as ":auth" <<router>>
+participant ControllerA as ":auth" <<controllers>>
+participant ModelU as ":User" <<model>>
+participant DB as ":Database" <<MongoDB>>
+
+note left of Server: Login (POST)
+[-> Server: req.post('/auth/login')
+activate Server
+Server -> RouterA: app.use('/auth', auth)
+activate RouterA
+RouterA -> ControllerA: login
+activate ControllerA
+ControllerA -> ModelU: findOne(email)
+activate ModelU
+ModelU -> DB: UserSchema
+activate DB
+DB --> ModelU: user
+deactivate DB
+ModelU --> ControllerA: user
+deactivate ModelU
+ControllerA --> Server: response
+deactivate ControllerA
+Server -->]: response
+deactivate Server
+@enduml

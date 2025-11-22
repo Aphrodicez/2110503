@@ -1,0 +1,40 @@
+@startuml
+participant Server as ":server" <<javaScript>>
+participant RouterB as ":bookings" <<router>>
+participant ControllerB as ":bookings" <<controllers>>
+participant ModelB as ":Booking" <<model>>
+participant DB as ":Database" <<MongoDB>>
+
+note left of Server: User Edit Own Booking (PUT)
+[-> Server: req.put('/bookings/:id')
+activate Server
+Server -> RouterB: app.use('/bookings', bookings)
+activate RouterB
+RouterB -> ControllerB: updateBooking
+activate ControllerB
+ControllerB -> ModelB: findById(id)
+activate ModelB
+ModelB -> DB: BookingSchema
+activate DB
+DB --> ModelB: booking
+deactivate DB
+ModelB --> ControllerB: booking
+deactivate ModelB
+
+alt booking.user == req.user.id
+    ControllerB -> ModelB: findByIdAndUpdate(id, req.body)
+    activate ModelB
+    ModelB -> DB: BookingSchema
+    activate DB
+    DB --> ModelB: updatedBooking
+    deactivate DB
+    ModelB --> ControllerB: updatedBooking
+    deactivate ModelB
+    ControllerB --> Server: response (200)
+else Unauthorized
+    ControllerB --> Server: response (401)
+end
+deactivate ControllerB
+Server -->]: response
+deactivate Server
+@enduml

@@ -1,0 +1,27 @@
+@startuml
+participant Server as ":server" <<javaScript>>
+participant RouterC as ":campgrounds" <<router>>
+participant ControllerC as ":campgrounds" <<controllers>>
+participant ModelC as ":Campground" <<model>>
+participant DB as ":Database" <<MongoDB>>
+
+note left of Server: View Product (GET)
+[-> Server: req.get('/campgrounds')
+activate Server
+Server -> RouterC: app.use('/campgrounds', campgrounds)
+activate RouterC
+RouterC -> ControllerC: getCampgrounds
+activate ControllerC
+ControllerC -> ModelC: find(query)
+activate ModelC
+ModelC -> DB: CampgroundSchema
+activate DB
+DB --> ModelC: campgrounds
+deactivate DB
+ModelC --> ControllerC: campgrounds
+deactivate ModelC
+ControllerC --> Server: response
+deactivate ControllerC
+Server -->]: response
+deactivate Server
+@enduml
