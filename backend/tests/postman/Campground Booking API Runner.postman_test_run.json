@@ -1,0 +1,633 @@
+{
+	"id": "87bcdf67-8db6-4ea2-929f-d801a424c5f0",
+	"name": "Campground Booking API Runner",
+	"timestamp": "2025-11-22T09:15:41.879Z",
+	"collection_id": "31142066-d43321c9-467a-4dcc-af64-444f07252d23",
+	"folder_id": 0,
+	"environment_id": "0",
+	"totalPass": 9,
+	"delay": 0,
+	"persist": true,
+	"status": "finished",
+	"startedAt": "2025-11-22T09:15:37.935Z",
+	"totalFail": 10,
+	"results": [
+		{
+			"id": "b639475b-1db5-463c-acb4-00c4f6e8ebff",
+			"name": "Register Admin",
+			"url": "http://localhost:5000/api/v1/auth/register",
+			"time": 317,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {
+				"Register admin succeeds": true
+			},
+			"testPassFailCounts": {
+				"Register admin succeeds": {
+					"pass": 1,
+					"fail": 0
+				}
+			},
+			"times": [
+				317
+			],
+			"allTests": [
+				{
+					"Register admin succeeds": true
+				}
+			]
+		},
+		{
+			"id": "931cca1a-5e26-4fa5-8a92-48f2ca5e1a2e",
+			"name": "Login Admin",
+			"url": "http://localhost:5000/api/v1/auth/login",
+			"time": 216,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {
+				"Login admin returns token": true
+			},
+			"testPassFailCounts": {
+				"Login admin returns token": {
+					"pass": 1,
+					"fail": 0
+				}
+			},
+			"times": [
+				216
+			],
+			"allTests": [
+				{
+					"Login admin returns token": true
+				}
+			]
+		},
+		{
+			"id": "291e26ed-7d25-4fb5-8ba9-3ea4a1daea05",
+			"name": "Create Campground (Admin)",
+			"url": "http://localhost:5000/api/v1/campgrounds",
+			"time": 93,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {
+				"Campground created": false
+			},
+			"testPassFailCounts": {
+				"Campground created": {
+					"pass": 0,
+					"fail": 1
+				}
+			},
+			"times": [
+				93
+			],
+			"allTests": [
+				{
+					"Campground created": false
+				}
+			]
+		},
+		{
+			"id": "0f28ab89-ea03-42a4-842a-5c0c2d698987",
+			"name": "(1.1) User Registration (Validation Fail)",
+			"url": "http://localhost:5000/api/v1/auth/register",
+			"time": 9,
+			"responseCode": {
+				"code": 400,
+				"name": "Bad Request"
+			},
+			"tests": {
+				"Register fails with missing fields": true
+			},
+			"testPassFailCounts": {
+				"Register fails with missing fields": {
+					"pass": 1,
+					"fail": 0
+				}
+			},
+			"times": [
+				9
+			],
+			"allTests": [
+				{
+					"Register fails with missing fields": true
+				}
+			]
+		},
+		{
+			"id": "3fa572b0-d70d-4756-84f1-63ffdc635ff0",
+			"name": "(1.2) User Registration (Success)",
+			"url": "http://localhost:5000/api/v1/auth/register",
+			"time": 199,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {
+				"Register camper succeeds": true
+			},
+			"testPassFailCounts": {
+				"Register camper succeeds": {
+					"pass": 1,
+					"fail": 0
+				}
+			},
+			"times": [
+				199
+			],
+			"allTests": [
+				{
+					"Register camper succeeds": true
+				}
+			]
+		},
+		{
+			"id": "db0de844-ef31-49a1-a26c-8f09427d9635",
+			"name": "(2) User Log-in",
+			"url": "http://localhost:5000/api/v1/auth/login",
+			"time": 186,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {
+				"Login camper returns token": true
+			},
+			"testPassFailCounts": {
+				"Login camper returns token": {
+					"pass": 1,
+					"fail": 0
+				}
+			},
+			"times": [
+				186
+			],
+			"allTests": [
+				{
+					"Login camper returns token": true
+				}
+			]
+		},
+		{
+			"id": "069467f8-bbe3-4e56-bd3d-28cfc6450f68",
+			"name": "(3) User View Product",
+			"url": "http://localhost:5000/api/v1/campgrounds/",
+			"time": 126,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {
+				"Fetched selected campground": true
+			},
+			"testPassFailCounts": {
+				"Fetched selected campground": {
+					"pass": 1,
+					"fail": 0
+				}
+			},
+			"times": [
+				126
+			],
+			"allTests": [
+				{
+					"Fetched selected campground": true
+				}
+			]
+		},
+		{
+			"id": "4be155d2-88d6-42a1-bff8-b02e23194c03",
+			"name": "(4.1) User Create Booking",
+			"url": "http://localhost:5000/api/v1/campgrounds//bookings",
+			"time": 7,
+			"responseCode": {
+				"code": 404,
+				"name": "Not Found"
+			},
+			"tests": {
+				"Booking created": false
+			},
+			"testPassFailCounts": {
+				"Booking created": {
+					"pass": 0,
+					"fail": 1
+				}
+			},
+			"times": [
+				7
+			],
+			"allTests": [
+				{
+					"Booking created": false
+				}
+			]
+		},
+		{
+			"id": "8e08a64f-c931-4d41-95b4-fa365795ffea",
+			"name": "(4.2) Create Booking 2 (Helper)",
+			"url": "http://localhost:5000/api/v1/campgrounds//bookings",
+			"time": 6,
+			"responseCode": {
+				"code": 404,
+				"name": "Not Found"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				6
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "c25bb04a-4809-4ab7-b997-c175250f7f00",
+			"name": "(4.3) Create Booking 3 (Helper)",
+			"url": "http://localhost:5000/api/v1/campgrounds//bookings",
+			"time": 6,
+			"responseCode": {
+				"code": 404,
+				"name": "Not Found"
+			},
+			"tests": {
+				"Booking 3 created": false
+			},
+			"testPassFailCounts": {
+				"Booking 3 created": {
+					"pass": 0,
+					"fail": 1
+				}
+			},
+			"times": [
+				6
+			],
+			"allTests": [
+				{
+					"Booking 3 created": false
+				}
+			]
+		},
+		{
+			"id": "386f7045-3d3c-4d7e-8aac-8e5309466617",
+			"name": "(4.4) Check Create Condition (Fail)",
+			"url": "http://localhost:5000/api/v1/campgrounds//bookings",
+			"time": 5,
+			"responseCode": {
+				"code": 404,
+				"name": "Not Found"
+			},
+			"tests": {
+				"Booking 4 fails (limit 3)": false
+			},
+			"testPassFailCounts": {
+				"Booking 4 fails (limit 3)": {
+					"pass": 0,
+					"fail": 1
+				}
+			},
+			"times": [
+				5
+			],
+			"allTests": [
+				{
+					"Booking 4 fails (limit 3)": false
+				}
+			]
+		},
+		{
+			"id": "438c998a-26d0-4696-af5d-e4bfd755041b",
+			"name": "(5) User View Own Booking",
+			"url": "http://localhost:5000/api/v1/bookings",
+			"time": 75,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {
+				"Camper bookings returned": false
+			},
+			"testPassFailCounts": {
+				"Camper bookings returned": {
+					"pass": 0,
+					"fail": 1
+				}
+			},
+			"times": [
+				75
+			],
+			"allTests": [
+				{
+					"Camper bookings returned": false
+				}
+			]
+		},
+		{
+			"id": "06899d9d-91dd-40fe-bba3-4ae5f8f7b62d",
+			"name": "(6) User Edit Own Booking",
+			"url": "http://localhost:5000/api/v1/bookings/",
+			"time": 4,
+			"responseCode": {
+				"code": 404,
+				"name": "Not Found"
+			},
+			"tests": {
+				"Booking updated": false
+			},
+			"testPassFailCounts": {
+				"Booking updated": {
+					"pass": 0,
+					"fail": 1
+				}
+			},
+			"times": [
+				4
+			],
+			"allTests": [
+				{
+					"Booking updated": false
+				}
+			]
+		},
+		{
+			"id": "badb8a61-98ad-4813-9471-2f99388474a4",
+			"name": "(7) User Delete Own Booking",
+			"url": "http://localhost:5000/api/v1/bookings/",
+			"time": 5,
+			"responseCode": {
+				"code": 404,
+				"name": "Not Found"
+			},
+			"tests": {
+				"Booking deleted by user": false
+			},
+			"testPassFailCounts": {
+				"Booking deleted by user": {
+					"pass": 0,
+					"fail": 1
+				}
+			},
+			"times": [
+				5
+			],
+			"allTests": [
+				{
+					"Booking deleted by user": false
+				}
+			]
+		},
+		{
+			"id": "844fa4ab-9d5b-4192-9efb-f9d58529ae64",
+			"name": "(8) User Log-out",
+			"url": "http://localhost:5000/api/v1/auth/logout",
+			"time": 41,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {
+				"Logout succeeds": true
+			},
+			"testPassFailCounts": {
+				"Logout succeeds": {
+					"pass": 1,
+					"fail": 0
+				}
+			},
+			"times": [
+				41
+			],
+			"allTests": [
+				{
+					"Logout succeeds": true
+				}
+			]
+		},
+		{
+			"id": "722e2cc7-eb64-44d5-a71f-6b638b995353",
+			"name": "(9) Admin Log-in",
+			"url": "http://localhost:5000/api/v1/auth/login",
+			"time": 175,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {
+				"Login admin returns token": true
+			},
+			"testPassFailCounts": {
+				"Login admin returns token": {
+					"pass": 1,
+					"fail": 0
+				}
+			},
+			"times": [
+				175
+			],
+			"allTests": [
+				{
+					"Login admin returns token": true
+				}
+			]
+		},
+		{
+			"id": "fb154fff-4905-4f83-b834-e66acc294cba",
+			"name": "(10) Admin View Any Booking",
+			"url": "http://localhost:5000/api/v1/bookings",
+			"time": 114,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {
+				"Admin can view bookings": true
+			},
+			"testPassFailCounts": {
+				"Admin can view bookings": {
+					"pass": 1,
+					"fail": 0
+				}
+			},
+			"times": [
+				114
+			],
+			"allTests": [
+				{
+					"Admin can view bookings": true
+				}
+			]
+		},
+		{
+			"id": "b2e61829-c686-4cd2-aa54-3a8929b2b25c",
+			"name": "(11) Admin Edit Any Booking",
+			"url": "http://localhost:5000/api/v1/bookings/",
+			"time": 4,
+			"responseCode": {
+				"code": 404,
+				"name": "Not Found"
+			},
+			"tests": {
+				"Booking updated by admin": false
+			},
+			"testPassFailCounts": {
+				"Booking updated by admin": {
+					"pass": 0,
+					"fail": 1
+				}
+			},
+			"times": [
+				4
+			],
+			"allTests": [
+				{
+					"Booking updated by admin": false
+				}
+			]
+		},
+		{
+			"id": "2f857867-c192-4f2d-b5ac-db309c5d95fb",
+			"name": "(12) Admin Delete Any Booking",
+			"url": "http://localhost:5000/api/v1/bookings/",
+			"time": 5,
+			"responseCode": {
+				"code": 404,
+				"name": "Not Found"
+			},
+			"tests": {
+				"Booking deleted by admin": false
+			},
+			"testPassFailCounts": {
+				"Booking deleted by admin": {
+					"pass": 0,
+					"fail": 1
+				}
+			},
+			"times": [
+				5
+			],
+			"allTests": [
+				{
+					"Booking deleted by admin": false
+				}
+			]
+		},
+		{
+			"id": "01064e21-a86f-4e7c-a533-234e877ba0a0",
+			"name": "Delete Campground (Admin)",
+			"url": "http://localhost:5000/api/v1/campgrounds/",
+			"time": 4,
+			"responseCode": {
+				"code": 404,
+				"name": "Not Found"
+			},
+			"tests": {
+				"Campground deleted": false
+			},
+			"testPassFailCounts": {
+				"Campground deleted": {
+					"pass": 0,
+					"fail": 1
+				}
+			},
+			"times": [
+				4
+			],
+			"allTests": [
+				{
+					"Campground deleted": false
+				}
+			]
+		}
+	],
+	"count": 1,
+	"totalTime": 1597,
+	"collection": {
+		"requests": [
+			{
+				"id": "b639475b-1db5-463c-acb4-00c4f6e8ebff",
+				"method": "POST"
+			},
+			{
+				"id": "931cca1a-5e26-4fa5-8a92-48f2ca5e1a2e",
+				"method": "POST"
+			},
+			{
+				"id": "291e26ed-7d25-4fb5-8ba9-3ea4a1daea05",
+				"method": "POST"
+			},
+			{
+				"id": "0f28ab89-ea03-42a4-842a-5c0c2d698987",
+				"method": "POST"
+			},
+			{
+				"id": "3fa572b0-d70d-4756-84f1-63ffdc635ff0",
+				"method": "POST"
+			},
+			{
+				"id": "db0de844-ef31-49a1-a26c-8f09427d9635",
+				"method": "POST"
+			},
+			{
+				"id": "069467f8-bbe3-4e56-bd3d-28cfc6450f68",
+				"method": "GET"
+			},
+			{
+				"id": "4be155d2-88d6-42a1-bff8-b02e23194c03",
+				"method": "POST"
+			},
+			{
+				"id": "8e08a64f-c931-4d41-95b4-fa365795ffea",
+				"method": "POST"
+			},
+			{
+				"id": "c25bb04a-4809-4ab7-b997-c175250f7f00",
+				"method": "POST"
+			},
+			{
+				"id": "386f7045-3d3c-4d7e-8aac-8e5309466617",
+				"method": "POST"
+			},
+			{
+				"id": "438c998a-26d0-4696-af5d-e4bfd755041b",
+				"method": "GET"
+			},
+			{
+				"id": "06899d9d-91dd-40fe-bba3-4ae5f8f7b62d",
+				"method": "PUT"
+			},
+			{
+				"id": "badb8a61-98ad-4813-9471-2f99388474a4",
+				"method": "DELETE"
+			},
+			{
+				"id": "844fa4ab-9d5b-4192-9efb-f9d58529ae64",
+				"method": "GET"
+			},
+			{
+				"id": "722e2cc7-eb64-44d5-a71f-6b638b995353",
+				"method": "POST"
+			},
+			{
+				"id": "fb154fff-4905-4f83-b834-e66acc294cba",
+				"method": "GET"
+			},
+			{
+				"id": "b2e61829-c686-4cd2-aa54-3a8929b2b25c",
+				"method": "PUT"
+			},
+			{
+				"id": "2f857867-c192-4f2d-b5ac-db309c5d95fb",
+				"method": "DELETE"
+			},
+			{
+				"id": "01064e21-a86f-4e7c-a533-234e877ba0a0",
+				"method": "DELETE"
+			}
+		]
+	}
+}
