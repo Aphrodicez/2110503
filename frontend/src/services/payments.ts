@@ -16,6 +16,12 @@ export const createCheckoutSession = (payload: CheckoutSessionPayload) =>
     json: payload,
   });
 
+export const createPaymentIntent = (amount: number) =>
+  apiFetch<{ clientSecret: string }>("/payments/create-payment-intent", {
+    method: "POST",
+    json: { amount },
+  });
+
 export const finalizeCheckoutBooking = (sessionId: string) =>
   apiFetch<ApiResponse<Booking> & { alreadyExists?: boolean }>(
     "/payments/finalize-booking",

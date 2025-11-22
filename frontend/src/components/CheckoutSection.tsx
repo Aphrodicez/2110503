@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 import CheckoutPageCard from "@/components/CheckoutPageCard";
+import { createPaymentIntent } from "@/services/payments";
 
 const stripePublicKey = import.meta.env.VITE_STRIPE_PUBLIC_KEY;
 
@@ -20,20 +21,9 @@ const CheckoutSection: React.FC<StripeCheckoutSectionProps> = ({ amount }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const createPaymentIntent = async () => {
+    const fetchPaymentIntent = async () => {
       try {
-        const res = await fetch(
-          "http://localhost:5000/api/v1/payments/create-payment-intent",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ amount }),
-          }
-        );
-
-        const data = await res.json();
+        const data = await createPaymentIntent(amount);
         setClientSecret(data.clientSecret);
       } catch (err) {
         console.error(err);
@@ -42,7 +32,7 @@ const CheckoutSection: React.FC<StripeCheckoutSectionProps> = ({ amount }) => {
       }
     };
 
-    createPaymentIntent();
+    fetchPaymentIntent();
   }, [amount]);
 
   if (loading) {
