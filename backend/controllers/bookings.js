@@ -11,10 +11,12 @@ exports.getBookings = async (req, res, next) => {
     query = Booking.find({ user: req.user.id })
       .populate({
         path: "campground",
+        // [Added from a-7] many fields
         select:
           "name address district province postalcode region tel image price",
       })
       .populate({
+        // [Added from a-7] populate user name
         path: "user",
         select: "name",
       });

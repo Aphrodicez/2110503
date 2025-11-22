@@ -17,6 +17,7 @@ const UserSchema = new mongoose.Schema({
     ],
   },
   telephone: {
+    // [Added from a-7] telephone field
     type: String,
     required: [true, "Please add a telephone number"],
     trim: true,
