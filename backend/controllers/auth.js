@@ -34,7 +34,7 @@ exports.register = async (req, res, next) => {
     // Create user
     const user = await User.create({
       name,
-      telephone,
+      telephone, // [Added from a-7] telephone field
       email,
       password,
       role,

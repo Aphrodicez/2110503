@@ -68,6 +68,15 @@ export function EditBookingDialog({ booking }: EditBookingDialogProps) {
           <DialogDescription>
             Change the date for your booking at {booking.campground.name}.
           </DialogDescription>
+          {booking.campground.image && (
+            <div className="w-full h-32 relative mt-2 rounded-md overflow-hidden">
+              <img
+                src={booking.campground.image}
+                alt={booking.campground.name}
+                className="object-cover w-full h-full"
+              />
+            </div>
+          )}
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">

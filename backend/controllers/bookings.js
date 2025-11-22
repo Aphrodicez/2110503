@@ -11,25 +11,41 @@ exports.getBookings = async (req, res, next) => {
     query = Booking.find({ user: req.user.id })
       .populate({
         path: "campground",
+        // [Added from a-7] many fields
         select:
           "name address district province postalcode region tel image price",
       })
       .populate({
+        // [Added from a-7] populate user name
         path: "user",
-        select: "name email telephone",
+        select: "name",
       });
   } else {
-    // Admin can see everything
-    query = Booking.find()
-      .populate({
-        path: "campground",
-        select:
-          "name address district province postalcode region tel image price",
-      })
-      .populate({
-        path: "user",
-        select: "name email telephone",
-      });
+    // Admin can see everything, optional campground filter
+    if (req.params.campgroundId) {
+      console.log("campgroundId is provided");
+      query = Booking.find({ campground: req.params.campgroundId })
+        .populate({
+          path: "campground",
+          select:
+            "name address district province postalcode region tel image price",
+        })
+        .populate({
+          path: "user",
+          select: "name",
+        });
+    } else {
+      query = Booking.find()
+        .populate({
+          path: "campground",
+          select:
+            "name address district province postalcode region tel image price",
+        })
+        .populate({
+          path: "user",
+          select: "name",
+        });
+    }
   }
 
   try {

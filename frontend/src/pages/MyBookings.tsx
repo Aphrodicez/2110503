@@ -9,7 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Calendar, MapPin, Trash2, CreditCard, User } from "lucide-react";
+import { Calendar, MapPin, Trash2, CreditCard, User, Phone, Globe } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
   AlertDialog,
@@ -260,88 +260,118 @@ const MyBookings = () => {
         ) : (
           <div className="grid gap-6">
             {bookings?.map((booking) => (
-              <Card key={booking._id} className="animate-fade-in">
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <CardTitle>{booking.campground.name}</CardTitle>
-                      <CardDescription className="flex items-center gap-2 mt-2">
-                        <Calendar className="h-4 w-4" />
-                        {format(new Date(booking.bookingDate), "PPP")}
-                      </CardDescription>
-                      <CardDescription className="flex items-center gap-2 mt-2">
-                        <User className="h-4 w-4" />
-                        {booking.user?.name || "Unknown User"}
-                      </CardDescription>
-                      <CardDescription className="flex items-center gap-2 mt-2">
-                        <MapPin className="h-4 w-4" />
-                        {formatLocation(booking.campground) ||
-                          "Location unavailable"}
-                      </CardDescription>
-                      <CardDescription className="flex items-center gap-2 mt-2">
-                        <CreditCard className="h-4 w-4" />
-                        {formatPrice(booking.campground.price) ??
-                          "Price unavailable"}
-                      </CardDescription>
-                      <CardDescription className="mt-2">
-                        <Badge
-                          variant={
-                            booking.paymentStatus === "paid"
-                              ? "secondary"
-                              : "destructive"
-                          }
-                        >
-                          {booking.paymentStatus === "paid"
-                            ? "Paid"
-                            : "Payment pending"}
-                        </Badge>
-                      </CardDescription>
+              <Card
+                key={booking._id}
+                className="animate-fade-in overflow-hidden"
+              >
+                <div className="flex flex-col md:flex-row">
+                  {booking.campground.image && (
+                    <div className="w-full md:w-72 h-48 md:h-72 relative shrink-0">
+                      <img
+                        src={booking.campground.image}
+                        alt={booking.campground.name}
+                        className="object-cover w-full h-full"
+                      />
                     </div>
-                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                      {!isAdmin && booking.paymentStatus !== "paid" && (
-                        <Button
-                          variant="default"
-                          disabled={checkoutMutation.isPending}
-                          onClick={() => handlePay(booking)}
-                        >
-                          {checkoutMutation.isPending &&
-                          payingBookingId === booking._id
-                            ? "Redirecting..."
-                            : "Pay Now"}
-                        </Button>
-                      )}
-                      <EditBookingDialog booking={booking} />
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            disabled={deleteMutation.isPending}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Delete Booking</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Are you sure you want to delete this booking? This
-                              action cannot be undone.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => handleDelete(booking._id)}
+                  )}
+                  <div className="flex-1">
+                    <CardHeader>
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <CardTitle>{booking.campground.name}</CardTitle>
+                          <CardDescription className="flex items-center gap-2 mt-2">
+                            <Calendar className="h-4 w-4" />
+                            {format(new Date(booking.bookingDate), "PPP")}
+                          </CardDescription>
+                          <CardDescription className="flex items-center gap-2 mt-2">
+                            <User className="h-4 w-4" />
+                            {booking.user?.name || "Unknown User"}
+                          </CardDescription>
+                          <CardDescription className="flex items-center gap-2 mt-2">
+                            <MapPin className="h-4 w-4" />
+                            {formatLocation(booking.campground) ||
+                              "Location unavailable"}
+                          </CardDescription>
+                          {booking.campground.region && (
+                            <CardDescription className="flex items-center gap-2 mt-2">
+                              <Globe className="h-4 w-4" />
+                              {booking.campground.region}
+                            </CardDescription>
+                          )}
+                          {booking.campground.tel && (
+                            <CardDescription className="flex items-center gap-2 mt-2">
+                              <Phone className="h-4 w-4" />
+                              {booking.campground.tel}
+                            </CardDescription>
+                          )}
+                          <CardDescription className="flex items-center gap-2 mt-2">
+                            <CreditCard className="h-4 w-4" />
+                            {formatPrice(booking.campground.price) ??
+                              "Price unavailable"}
+                          </CardDescription>
+                          <CardDescription className="mt-2">
+                            <Badge
+                              variant={
+                                booking.paymentStatus === "paid"
+                                  ? "secondary"
+                                  : "destructive"
+                              }
                             >
-                              Delete
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
+                              {booking.paymentStatus === "paid"
+                                ? "Paid"
+                                : "Payment pending"}
+                            </Badge>
+                          </CardDescription>
+                        </div>
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                          {!isAdmin && booking.paymentStatus !== "paid" && (
+                            <Button
+                              variant="default"
+                              disabled={checkoutMutation.isPending}
+                              onClick={() => handlePay(booking)}
+                            >
+                              {checkoutMutation.isPending &&
+                              payingBookingId === booking._id
+                                ? "Redirecting..."
+                                : "Pay Now"}
+                            </Button>
+                          )}
+                          <EditBookingDialog booking={booking} />
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                disabled={deleteMutation.isPending}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>
+                                  Delete Booking
+                                </AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Are you sure you want to delete this booking?
+                                  This action cannot be undone.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => handleDelete(booking._id)}
+                                >
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      </div>
+                    </CardHeader>
                   </div>
-                </CardHeader>
+                </div>
               </Card>
             ))}
           </div>
