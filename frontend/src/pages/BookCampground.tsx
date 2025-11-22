@@ -74,10 +74,15 @@ const BookCampground = () => {
       navigate("/my-bookings");
     },
     onError: (mutationError: unknown) => {
-      const message =
+      let message =
         mutationError instanceof Error
           ? mutationError.message
           : "Unable to create booking";
+
+      if (message.includes("has already made 3 bookings")) {
+        message = "You have already made 3 bookings";
+      }
+
       toast({
         title: "Booking failed",
         description: message,
