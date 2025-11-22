@@ -38,36 +38,6 @@ const ensureSessionPlaceholder = (href) => {
   );
 };
 
-// @desc    Create payment intent
-// @route   POST /api/v1/payments/create-payment-intent
-// @access  Public (or Private depending on usage, currently no protect middleware in original for this route?)
-// Note: Original code didn't have protect on create-payment-intent, but usually it should.
-// I will keep it as is from the route file.
-exports.createPaymentIntent = async (req, res) => {
-  try {
-    const { amount } = req.body;
-
-    if (!amount) {
-      return res.status(400).json({ error: "Amount is required" });
-    }
-
-    // amount must be in smallest currency unit (e.g. 78800 = ฿788.00)
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount,
-      currency: "thb",
-      //   automatic_payment_methods: { enabled: true },
-      payment_method_types: ["card"],
-    });
-
-    return res.json({
-      clientSecret: paymentIntent.client_secret,
-    });
-  } catch (err) {
-    console.error("Stripe error:", err);
-    return res.status(500).json({ error: err.message });
-  }
-};
-
 // @desc    Create checkout session
 // @route   POST /api/v1/payments/create-checkout-session
 // @access  Private

@@ -10,19 +10,15 @@ export interface CheckoutSessionResponse {
   url: string;
 }
 
+// ...existing code...
 export const createCheckoutSession = (payload: CheckoutSessionPayload) =>
   apiFetch<CheckoutSessionResponse>("/payments/create-checkout-session", {
     method: "POST",
     json: payload,
   });
 
-export const createPaymentIntent = (amount: number) =>
-  apiFetch<{ clientSecret: string }>("/payments/create-payment-intent", {
-    method: "POST",
-    json: { amount },
-  });
-
 export const finalizeCheckoutBooking = (sessionId: string) =>
+  // ...existing code...
   apiFetch<ApiResponse<Booking> & { alreadyExists?: boolean }>(
     "/payments/finalize-booking",
     {

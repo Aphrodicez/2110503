@@ -7,7 +7,6 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-
       <section className="relative py-20 bg-gradient-to-b from-primary/10 to-background">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center">
@@ -30,7 +29,7 @@ const Index = () => {
           </div>
         </div>
       </section>
-
+      // ...existing code...
       <section className="py-20">
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-3 gap-8">
@@ -65,13 +64,6 @@ const Index = () => {
           </div>
         </div>
       </section>
-
-      {/* Stripe checkout section – can move to its own page later if you want */}
-      {/* <section className="py-10">
-        <div className="container mx-auto px-4">
-          <CheckoutSection amount={78800} />
-        </div>
-      </section> */}
     </div>
   );
 };
