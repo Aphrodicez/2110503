@@ -7,24 +7,6 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: "2025-10-29.clover", // or your account's API version
 });
 
-const ensureUrlString = (rawUrl, fallbackUrl) => {
-  try {
-    return new URL(rawUrl || fallbackUrl).toString();
-  } catch (err) {
-    console.warn("Invalid Stripe redirect URL, using fallback", err);
-    return new URL(fallbackUrl).toString();
-  }
-};
-
-const ensureStatusParam = (href, statusValue) => {
-  if (!statusValue) return href;
-  const url = new URL(href);
-  if (!url.searchParams.has("status")) {
-    url.searchParams.set("status", statusValue);
-  }
-  return url.toString();
-};
-
 const ensureSessionPlaceholder = (href) => {
   const url = new URL(href);
   if (url.searchParams.has("session_id")) {
@@ -70,21 +52,9 @@ exports.createCheckoutSession = async (req, res) => {
       )}`;
 
     const successUrl = ensureSessionPlaceholder(
-      ensureStatusParam(
-        ensureUrlString(
-          process.env.STRIPE_SUCCESS_URL,
-          "http://localhost:8080/my-bookings"
-        ),
-        "success"
-      )
+      "http://localhost:8080/my-bookings?status=success"
     );
-    const cancelUrl = ensureStatusParam(
-      ensureUrlString(
-        process.env.STRIPE_CANCEL_URL,
-        `http://localhost:8080/book/${campgroundId}`
-      ),
-      "cancelled"
-    );
+    const cancelUrl = `http://localhost:8080/book/${campgroundId}?status=cancelled`;
 
     const metadata = {
       campgroundId,
