@@ -49,8 +49,16 @@ export const apiFetch = async <T>(
   }
 
   if (!response.ok) {
+    const payloadObj = payload as {
+      message?: string;
+      msg?: string;
+      error?: string;
+    };
     const message =
-      (payload as { message?: string })?.message || "Request failed";
+      payloadObj?.message ||
+      payloadObj?.msg ||
+      payloadObj?.error ||
+      "Request failed";
     throw new Error(message);
   }
 

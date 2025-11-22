@@ -45,7 +45,10 @@ const Register = () => {
       toast({ title: "Welcome", description: "Account created successfully." });
       navigate("/campgrounds");
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Unable to register";
+      let message = error instanceof Error ? error.message : "Unable to register";
+      if (message === "Request failed") {
+        message = "Please check your details or try a different email.";
+      }
       toast({ title: "Registration failed", description: message, variant: "destructive" });
     } finally {
       setIsSubmitting(false);
