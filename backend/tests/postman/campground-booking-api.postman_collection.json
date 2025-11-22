@@ -1,998 +1,1034 @@
 {
-  "info": {
-    "name": "Campground Booking API Runner",
-    "description": "Collection to verify auth, campground, and booking flows for the Campground Booking backend.",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "version": {
-      "major": 1,
-      "minor": 0,
-      "patch": 0
-    }
-  },
-  "item": [
-    {
-      "name": "Setup (Admin)",
-      "item": [
-        {
-          "name": "Register Admin",
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "exec": [
-                  "const ts = Date.now();",
-                  "pm.environment.set('adminEmail', 'admin_' + ts + '@runner.test');",
-                  "pm.environment.set('adminPassword', 'Admin!' + ts);",
-                  "pm.environment.set('adminTelephone', '08' + String(ts % 1000000000).padStart(9, '0'));"
-                ],
-                "type": "text/javascript"
-              }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Register admin succeeds', function () {",
-                  "    pm.response.to.have.status(200);",
-                  "    const json = pm.response.json();",
-                  "    pm.expect(json.success).to.be.true;",
-                  "    pm.expect(json).to.have.property('token');",
-                  "    pm.environment.set('adminToken', json.token);",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Runner Admin\",\n  \"email\": \"{{adminEmail}}\",\n  \"telephone\": \"{{adminTelephone}}\",\n  \"password\": \"{{adminPassword}}\",\n  \"role\": \"admin\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/auth/register",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "auth",
-                "register"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Login Admin",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Login admin returns token', function () {",
-                  "    pm.response.to.have.status(200);",
-                  "    const json = pm.response.json();",
-                  "    pm.expect(json.success).to.be.true;",
-                  "    pm.environment.set('adminToken', json.token);",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/auth/login",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "auth",
-                "login"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Create Campground (Admin)",
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "exec": [
-                  "const ts = Date.now();",
-                  "pm.environment.set('campgroundName', 'Runner Camp ' + ts);"
-                ],
-                "type": "text/javascript"
-              }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Campground created', function () {",
-                  "    pm.response.to.have.status(200);",
-                  "    const json = pm.response.json();",
-                  "    pm.expect(json.success).to.be.true;",
-                  "    pm.environment.set('campgroundId', json.data._id);",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{adminToken}}"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"{{campgroundName}}\",\n  \"address\": \"42 Runner Road\",\n  \"district\": \"Sample District\",\n  \"province\": \"Sample Province\",\n  \"postalcode\": \"12345\",\n  \"tel\": \"02-1234567\",\n  \"region\": \"Central\",\n \"image\": \"https://example.com/image.jpg\",\n  \"price\": 50\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/campgrounds",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "campgrounds"
-              ]
-            }
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "User Flow",
-      "item": [
-        {
-          "name": "User Registration (Validation Fail)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Register fails with missing fields', function () {",
-                  "    pm.response.to.have.status(400);",
-                  "    const json = pm.response.json();",
-                  "    pm.expect(json.success).to.be.false;",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Incomplete User\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/auth/register",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "auth",
-                "register"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "User Registration (Success)",
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "exec": [
-                  "const ts = Date.now();",
-                  "pm.environment.set('userEmail', 'camper_' + ts + '@runner.test');",
-                  "pm.environment.set('userPassword', 'User!' + ts);",
-                  "pm.environment.set('userTelephone', '09' + String(ts % 1000000000).padStart(9, '0'));"
-                ],
-                "type": "text/javascript"
-              }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Register camper succeeds', function () {",
-                  "    pm.response.to.have.status(200);",
-                  "    const json = pm.response.json();",
-                  "    pm.expect(json.success).to.be.true;",
-                  "    pm.environment.set('userToken', json.token);",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Runner Camper\",\n  \"email\": \"{{userEmail}}\",\n  \"telephone\": \"{{userTelephone}}\",\n  \"password\": \"{{userPassword}}\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/auth/register",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "auth",
-                "register"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "User Log-in",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Login camper returns token', function () {",
-                  "    pm.response.to.have.status(200);",
-                  "    const json = pm.response.json();",
-                  "    pm.expect(json.success).to.be.true;",
-                  "    pm.environment.set('userToken', json.token);",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"{{userEmail}}\",\n  \"password\": \"{{userPassword}}\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/auth/login",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "auth",
-                "login"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "User View Product",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Fetched selected campground', function () {",
-                  "    pm.response.to.have.status(200);",
-                  "    const json = pm.response.json();",
-                  "    pm.expect(json.success).to.be.true;",
-                  "    pm.expect(json.data._id).to.eql(pm.environment.get('campgroundId'));",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "url": {
-              "raw": "{{baseUrl}}/campgrounds/{{campgroundId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "campgrounds",
-                "{{campgroundId}}"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "User Create Booking",
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "exec": [
-                  "const tomorrow = new Date(Date.now() + 86400000).toISOString();",
-                  "pm.environment.set('bookingDate', tomorrow);"
-                ],
-                "type": "text/javascript"
-              }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Booking created', function () {",
-                  "    pm.response.to.have.status(200);",
-                  "    const json = pm.response.json();",
-                  "    pm.expect(json.success).to.be.true;",
-                  "    pm.environment.set('bookingId', json.data._id);",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{userToken}}"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"bookingDate\": \"{{bookingDate}}\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/campgrounds/{{campgroundId}}/bookings",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "campgrounds",
-                "{{campgroundId}}",
-                "bookings"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Create Booking 2 (Helper)",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{userToken}}"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"bookingDate\": \"{{bookingDate}}\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/campgrounds/{{campgroundId}}/bookings",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "campgrounds",
-                "{{campgroundId}}",
-                "bookings"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Create Booking 3 (Helper)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Booking 3 created', function () {",
-                  "    pm.response.to.have.status(200);",
-                  "    const json = pm.response.json();",
-                  "    pm.environment.set('bookingId3', json.data._id);",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{userToken}}"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"bookingDate\": \"{{bookingDate}}\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/campgrounds/{{campgroundId}}/bookings",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "campgrounds",
-                "{{campgroundId}}",
-                "bookings"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Check Create Condition (Fail)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Booking 4 fails (limit 3)', function () {",
-                  "    pm.response.to.have.status(400);",
-                  "    const json = pm.response.json();",
-                  "    pm.expect(json.success).to.be.false;",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{userToken}}"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"bookingDate\": \"{{bookingDate}}\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/campgrounds/{{campgroundId}}/bookings",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "campgrounds",
-                "{{campgroundId}}",
-                "bookings"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "User View Own Booking",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Camper bookings returned', function () {",
-                  "    pm.response.to.have.status(200);",
-                  "    const json = pm.response.json();",
-                  "    pm.expect(json.success).to.be.true;",
-                  "    pm.expect(json.data.length).to.be.at.least(3);",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{userToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/bookings",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "bookings"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "User Edit Own Booking",
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "exec": [
-                  "const nextWeek = new Date(Date.now() + 7 * 86400000).toISOString();",
-                  "pm.environment.set('updatedBookingDate', nextWeek);"
-                ],
-                "type": "text/javascript"
-              }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Booking updated', function () {",
-                  "    pm.response.to.have.status(200);",
-                  "    const json = pm.response.json();",
-                  "    pm.expect(json.success).to.be.true;",
-                  "    pm.expect(json.data.bookingDate).to.eql(pm.environment.get('updatedBookingDate'));",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "PUT",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{userToken}}"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"bookingDate\": \"{{updatedBookingDate}}\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/bookings/{{bookingId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "bookings",
-                "{{bookingId}}"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "User Delete Own Booking",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Booking deleted by user', function () {",
-                  "    pm.response.to.have.status(200);",
-                  "    const json = pm.response.json();",
-                  "    pm.expect(json.success).to.be.true;",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "DELETE",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{userToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/bookings/{{bookingId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "bookings",
-                "{{bookingId}}"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "User Log-out",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Logout succeeds', function () {",
-                  "    pm.response.to.have.status(200);",
-                  "    const json = pm.response.json();",
-                  "    pm.expect(json.success).to.be.true;",
-                  "    pm.environment.set('userToken', '');",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{userToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/auth/logout",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "auth",
-                "logout"
-              ]
-            }
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "Admin Flow",
-      "item": [
-        {
-          "name": "Admin Log-in",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Login admin returns token', function () {",
-                  "    pm.response.to.have.status(200);",
-                  "    const json = pm.response.json();",
-                  "    pm.expect(json.success).to.be.true;",
-                  "    pm.environment.set('adminToken', json.token);",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/auth/login",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "auth",
-                "login"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Admin View Any Booking",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Admin can view bookings', function () {",
-                  "    pm.response.to.have.status(200);",
-                  "    const json = pm.response.json();",
-                  "    pm.expect(json.success).to.be.true;",
-                  "    pm.expect(json.count).to.be.at.least(1);",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{adminToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/bookings",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "bookings"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Admin Edit Any Booking",
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "exec": [
-                  "const nextMonth = new Date(Date.now() + 30 * 86400000).toISOString();",
-                  "pm.environment.set('adminUpdatedDate', nextMonth);"
-                ],
-                "type": "text/javascript"
-              }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Booking updated by admin', function () {",
-                  "    pm.response.to.have.status(200);",
-                  "    const json = pm.response.json();",
-                  "    pm.expect(json.success).to.be.true;",
-                  "    pm.expect(json.data.bookingDate).to.eql(pm.environment.get('adminUpdatedDate'));",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "PUT",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{adminToken}}"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"bookingDate\": \"{{adminUpdatedDate}}\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/bookings/{{bookingId3}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "bookings",
-                "{{bookingId3}}"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Admin Delete Any Booking",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Booking deleted by admin', function () {",
-                  "    pm.response.to.have.status(200);",
-                  "    const json = pm.response.json();",
-                  "    pm.expect(json.success).to.be.true;",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "DELETE",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{adminToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/bookings/{{bookingId3}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "bookings",
-                "{{bookingId3}}"
-              ]
-            }
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "Cleanup",
-      "item": [
-        {
-          "name": "Delete Campground (Admin)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Campground deleted', function () {",
-                  "    pm.response.to.have.status(200);",
-                  "    const json = pm.response.json();",
-                  "    pm.expect(json.success).to.be.true;",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "DELETE",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{adminToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/campgrounds/{{campgroundId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "campgrounds",
-                "{{campgroundId}}"
-              ]
-            }
-          },
-          "response": []
-        }
-      ]
-    }
-  ],
-  "variable": [
-    {
-      "key": "baseUrl",
-      "value": "http://localhost:5000/api/v1"
-    },
-    {
-      "key": "adminEmail",
-      "value": ""
-    },
-    {
-      "key": "adminPassword",
-      "value": ""
-    },
-    {
-      "key": "adminTelephone",
-      "value": ""
-    },
-    {
-      "key": "adminToken",
-      "value": ""
-    },
-    {
-      "key": "userEmail",
-      "value": ""
-    },
-    {
-      "key": "userPassword",
-      "value": ""
-    },
-    {
-      "key": "userTelephone",
-      "value": ""
-    },
-    {
-      "key": "userToken",
-      "value": ""
-    },
-    {
-      "key": "campgroundId",
-      "value": ""
-    },
-    {
-      "key": "campgroundName",
-      "value": ""
-    },
-    {
-      "key": "bookingId",
-      "value": ""
-    },
-    {
-      "key": "bookingId3",
-      "value": ""
-    },
-    {
-      "key": "bookingDate",
-      "value": ""
-    },
-    {
-      "key": "updatedBookingDate",
-      "value": ""
-    },
-    {
-      "key": "adminUpdatedDate",
-      "value": ""
-    }
-  ]
+	"info": {
+		"_postman_id": "2e50e27e-d465-4e5a-a9fd-dfbfca633df1",
+		"name": "Campground Booking API Runner",
+		"description": "Collection to verify auth, campground, and booking flows for the Campground Booking backend.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "31142066"
+	},
+	"item": [
+		{
+			"name": "Setup (Admin)",
+			"item": [
+				{
+					"name": "Register Admin",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const ts = Date.now();",
+									"pm.environment.set('adminEmail', 'admin_' + ts + '@runner.test');",
+									"pm.environment.set('adminPassword', 'Admin!' + ts);",
+									"pm.environment.set('adminTelephone', '08' + String(ts % 1000000000).padStart(9, '0'));"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Register admin succeeds', function () {",
+									"    pm.response.to.have.status(200);",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.success).to.be.true;",
+									"    pm.expect(json).to.have.property('token');",
+									"    pm.environment.set('adminToken', json.token);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Runner Admin\",\n  \"email\": \"{{adminEmail}}\",\n  \"telephone\": \"{{adminTelephone}}\",\n  \"password\": \"{{adminPassword}}\",\n  \"role\": \"admin\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login Admin",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Login admin returns token', function () {",
+									"    pm.response.to.have.status(200);",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.success).to.be.true;",
+									"    pm.environment.set('adminToken', json.token);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Campground (Admin)",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const ts = Date.now();",
+									"pm.environment.set('campgroundName', 'Runner Camp ' + ts);"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Campground created', function () {",
+									"    pm.response.to.have.status(200);",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.success).to.be.true;",
+									"    pm.environment.set('campgroundId', json.data._id);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"{{campgroundName}}\",\n  \"address\": \"42 Runner Road\",\n  \"district\": \"Sample District\",\n  \"province\": \"Sample Province\",\n  \"postalcode\": \"12345\",\n  \"tel\": \"02-1234567\",\n  \"region\": \"Central\",\n \"image\": \"https://example.com/image.jpg\",\n  \"price\": 50\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/campgrounds",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"campgrounds"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "User Flow",
+			"item": [
+				{
+					"name": "(1.1) User Registration (Validation Fail)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Register fails with missing fields', function () {",
+									"    pm.response.to.have.status(400);",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.success).to.be.false;",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Incomplete User\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "1.2) User Registration (Success)",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const ts = Date.now();",
+									"pm.environment.set('userEmail', 'camper_' + ts + '@runner.test');",
+									"pm.environment.set('userPassword', 'User!' + ts);",
+									"pm.environment.set('userTelephone', '09' + String(ts % 1000000000).padStart(9, '0'));"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Register camper succeeds', function () {",
+									"    pm.response.to.have.status(200);",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.success).to.be.true;",
+									"    pm.environment.set('userToken', json.token);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Runner Camper\",\n  \"email\": \"{{userEmail}}\",\n  \"telephone\": \"{{userTelephone}}\",\n  \"password\": \"{{userPassword}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "(2) User Log-in",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Login camper returns token', function () {",
+									"    pm.response.to.have.status(200);",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.success).to.be.true;",
+									"    pm.environment.set('userToken', json.token);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"{{userEmail}}\",\n  \"password\": \"{{userPassword}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "(3) User View Product",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Fetched selected campground', function () {",
+									"    pm.response.to.have.status(200);",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.success).to.be.true;",
+									"    pm.expect(json.data._id).to.eql(pm.environment.get('campgroundId'));",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/campgrounds/{{campgroundId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"campgrounds",
+								"{{campgroundId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "(4.1) User Create Booking",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const tomorrow = new Date(Date.now() + 86400000).toISOString();",
+									"pm.environment.set('bookingDate', tomorrow);"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Booking created', function () {",
+									"    pm.response.to.have.status(200);",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.success).to.be.true;",
+									"    pm.environment.set('bookingId', json.data._id);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{userToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"bookingDate\": \"{{bookingDate}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/campgrounds/{{campgroundId}}/bookings",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"campgrounds",
+								"{{campgroundId}}",
+								"bookings"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "(4.2) Create Booking 2 (Helper)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{userToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"bookingDate\": \"{{bookingDate}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/campgrounds/{{campgroundId}}/bookings",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"campgrounds",
+								"{{campgroundId}}",
+								"bookings"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "(4.3) Create Booking 3 (Helper)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Booking 3 created', function () {",
+									"    pm.response.to.have.status(200);",
+									"    const json = pm.response.json();",
+									"    pm.environment.set('bookingId3', json.data._id);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{userToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"bookingDate\": \"{{bookingDate}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/campgrounds/{{campgroundId}}/bookings",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"campgrounds",
+								"{{campgroundId}}",
+								"bookings"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "(4.4) Check Create Condition (Fail)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Booking 4 fails (limit 3)', function () {",
+									"    pm.response.to.have.status(400);",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.success).to.be.false;",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{userToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"bookingDate\": \"{{bookingDate}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/campgrounds/{{campgroundId}}/bookings",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"campgrounds",
+								"{{campgroundId}}",
+								"bookings"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "(5) User View Own Booking",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Camper bookings returned', function () {",
+									"    pm.response.to.have.status(200);",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.success).to.be.true;",
+									"    pm.expect(json.data.length).to.be.at.least(3);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{userToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/bookings",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"bookings"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "(6) User Edit Own Booking",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const nextWeek = new Date(Date.now() + 7 * 86400000).toISOString();",
+									"pm.environment.set('updatedBookingDate', nextWeek);"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Booking updated', function () {",
+									"    pm.response.to.have.status(200);",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.success).to.be.true;",
+									"    pm.expect(json.data.bookingDate).to.eql(pm.environment.get('updatedBookingDate'));",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{userToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"bookingDate\": \"{{updatedBookingDate}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/bookings/{{bookingId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"bookings",
+								"{{bookingId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "(7) User Delete Own Booking",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Booking deleted by user', function () {",
+									"    pm.response.to.have.status(200);",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.success).to.be.true;",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{userToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/bookings/{{bookingId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"bookings",
+								"{{bookingId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "(8) User Log-out",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Logout succeeds', function () {",
+									"    pm.response.to.have.status(200);",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.success).to.be.true;",
+									"    pm.environment.set('userToken', '');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{userToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/auth/logout",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"logout"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Admin Flow",
+			"item": [
+				{
+					"name": "(9) Admin Log-in",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Login admin returns token', function () {",
+									"    pm.response.to.have.status(200);",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.success).to.be.true;",
+									"    pm.environment.set('adminToken', json.token);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "(10) Admin View Any Booking",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Admin can view bookings', function () {",
+									"    pm.response.to.have.status(200);",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.success).to.be.true;",
+									"    pm.expect(json.count).to.be.at.least(1);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/bookings",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"bookings"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "(11) Admin Edit Any Booking",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const nextMonth = new Date(Date.now() + 30 * 86400000).toISOString();",
+									"pm.environment.set('adminUpdatedDate', nextMonth);"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Booking updated by admin', function () {",
+									"    pm.response.to.have.status(200);",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.success).to.be.true;",
+									"    pm.expect(json.data.bookingDate).to.eql(pm.environment.get('adminUpdatedDate'));",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"bookingDate\": \"{{adminUpdatedDate}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/bookings/{{bookingId3}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"bookings",
+								"{{bookingId3}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "(12) Admin Delete Any Booking",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Booking deleted by admin', function () {",
+									"    pm.response.to.have.status(200);",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.success).to.be.true;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/bookings/{{bookingId3}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"bookings",
+								"{{bookingId3}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Cleanup",
+			"item": [
+				{
+					"name": "Delete Campground (Admin)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Campground deleted', function () {",
+									"    pm.response.to.have.status(200);",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.success).to.be.true;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/campgrounds/{{campgroundId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"campgrounds",
+								"{{campgroundId}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:5000/api/v1"
+		},
+		{
+			"key": "adminEmail",
+			"value": ""
+		},
+		{
+			"key": "adminPassword",
+			"value": ""
+		},
+		{
+			"key": "adminTelephone",
+			"value": ""
+		},
+		{
+			"key": "adminToken",
+			"value": ""
+		},
+		{
+			"key": "userEmail",
+			"value": ""
+		},
+		{
+			"key": "userPassword",
+			"value": ""
+		},
+		{
+			"key": "userTelephone",
+			"value": ""
+		},
+		{
+			"key": "userToken",
+			"value": ""
+		},
+		{
+			"key": "campgroundId",
+			"value": ""
+		},
+		{
+			"key": "campgroundName",
+			"value": ""
+		},
+		{
+			"key": "bookingId",
+			"value": ""
+		},
+		{
+			"key": "bookingId3",
+			"value": ""
+		},
+		{
+			"key": "bookingDate",
+			"value": ""
+		},
+		{
+			"key": "updatedBookingDate",
+			"value": ""
+		},
+		{
+			"key": "adminUpdatedDate",
+			"value": ""
+		}
+	]
 }
