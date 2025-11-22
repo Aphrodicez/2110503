@@ -15,6 +15,7 @@ import { fetchCampgrounds } from "@/services/campgrounds";
 import { Spinner } from "@/components/ui/spinner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { formatPrice } from "@/lib/utils";
+import RatingStars from "@/components/RatingStars";
 
 const Campgrounds = () => {
   const {
@@ -110,7 +111,30 @@ const Campgrounds = () => {
                       </span>
                     </div>
                   </CardContent>
-                  <CardFooter>
+                  <CardContent className="pt-0">
+                    {campground.reviewsCount && campground.reviewsCount > 0 ? (
+                      <div className="flex items-center justify-between text-sm text-muted-foreground">
+                        <RatingStars
+                          rating={campground.averageRating ?? 0}
+                          size="sm"
+                        />
+                        <span>
+                          {campground.reviewsCount} review
+                          {campground.reviewsCount === 1 ? "" : "s"}
+                        </span>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        Be the first to review
+                      </p>
+                    )}
+                  </CardContent>
+                  <CardFooter className="flex w-full gap-2">
+                    <Button asChild variant="outline" className="w-full">
+                      <Link to={`/campgrounds/${campground._id}/reviews`}>
+                        See Reviews
+                      </Link>
+                    </Button>
                     <Button asChild className="w-full">
                       <Link to={`/book/${campground._id}`}>Book Now</Link>
                     </Button>

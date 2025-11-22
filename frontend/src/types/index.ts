@@ -11,6 +11,8 @@ export interface Campground {
   price?: number;
   createdAt?: string;
   bookings?: Booking[];
+  averageRating?: number;
+  reviewsCount?: number;
 }
 
 export interface User {
@@ -29,6 +31,22 @@ export interface Booking {
   campground: Campground;
   user: User;
   createdAt: string;
+}
+
+export interface Review {
+  _id: string;
+  rating: number;
+  comment: string;
+  campground: string | Pick<Campground, "_id" | "name">;
+  user: Pick<User, "_id" | "name">;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ReviewSummary {
+  campgroundId: string;
+  averageRating: number;
+  reviewsCount: number;
 }
 
 export interface AuthCredentials {
