@@ -8,27 +8,28 @@ exports.getBookings = async (req, res, next) => {
   let query;
   // General users can see only their bookings
   if (req.user.role !== "admin") {
-    query = Booking.find({ user: req.user.id }).populate({
-      path: "campground",
-      select:
-        "name address district province postalcode region tel image price",
-    });
+    query = Booking.find({ user: req.user.id })
+      .populate({
+        path: "campground",
+        select:
+          "name address district province postalcode region tel image price",
+      })
+      .populate({
+        path: "user",
+        select: "name email telephone",
+      });
   } else {
-    // Admin can see everything, optional campground filter
-    if (req.params.campgroundId) {
-      console.log("campgroundId is provided");
-      query = Booking.find({ campground: req.params.campgroundId }).populate({
+    // Admin can see everything
+    query = Booking.find()
+      .populate({
         path: "campground",
         select:
           "name address district province postalcode region tel image price",
+      })
+      .populate({
+        path: "user",
+        select: "name email telephone",
       });
-    } else {
-      query = Booking.find().populate({
-        path: "campground",
-        select:
-          "name address district province postalcode region tel image price",
-      });
-    }
   }
 
   try {
