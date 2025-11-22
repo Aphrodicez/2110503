@@ -11,6 +11,7 @@ import BookCampground from "./pages/BookCampground";
 import MyBookings from "./pages/MyBookings";
 import AdminBookings from "./pages/AdminBookings";
 import NotFound from "./pages/NotFound";
+import CampgroundReviews from "./pages/CampgroundReviews";
 import { AuthProvider } from "@/context/AuthContext";
 import { RequireAuth } from "@/components/RequireAuth";
 
@@ -29,28 +30,32 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/campgrounds" element={<Campgrounds />} />
             <Route
+              path="/campgrounds/:id/reviews"
+              element={<CampgroundReviews />}
+            />
+            <Route
               path="/book/:id"
-              element={(
+              element={
                 <RequireAuth>
                   <BookCampground />
                 </RequireAuth>
-              )}
+              }
             />
             <Route
               path="/my-bookings"
-              element={(
+              element={
                 <RequireAuth>
                   <MyBookings />
                 </RequireAuth>
-              )}
+              }
             />
             <Route
               path="/admin/bookings"
-              element={(
+              element={
                 <RequireAuth role="admin">
                   <AdminBookings />
                 </RequireAuth>
-              )}
+              }
             />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
