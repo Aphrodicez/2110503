@@ -16,6 +16,12 @@ export const createBooking = (campgroundId: string, bookingDate: string) =>
     json: { bookingDate },
   });
 
+export const updateBooking = (bookingId: string, bookingDate: string) =>
+  apiFetch<ApiResponse<Booking>>(`/bookings/${bookingId}`, {
+    method: "PUT",
+    json: { bookingDate },
+  });
+
 export const deleteBooking = (bookingId: string) =>
   apiFetch<ApiResponse<unknown>>(`/bookings/${bookingId}`, {
     method: "DELETE",

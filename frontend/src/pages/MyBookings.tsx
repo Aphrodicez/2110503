@@ -31,6 +31,7 @@ import { formatPrice } from "@/lib/utils";
 import type { Booking as BookingType, Campground } from "@/types";
 import { createCheckoutSession, finalizeCheckoutBooking } from "@/services/payments";
 import { Badge } from "@/components/ui/badge";
+import { EditBookingDialog } from "@/components/EditBookingDialog";
 
 const MyBookings = () => {
   const { toast } = useToast();
@@ -297,6 +298,7 @@ const MyBookings = () => {
                             : "Pay Now"}
                         </Button>
                       )}
+                      <EditBookingDialog booking={booking} />
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button

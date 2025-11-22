@@ -26,6 +26,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { format } from "date-fns";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { formatPrice } from "@/lib/utils";
+import { EditBookingDialog } from "@/components/EditBookingDialog";
 
 const AdminBookings = () => {
   const { toast } = useToast();
@@ -130,6 +131,7 @@ const AdminBookings = () => {
                       </CardDescription>
                     </div>
                     <div className="flex gap-2">
+                      <EditBookingDialog booking={booking} />
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button
