@@ -1,41 +1,10 @@
-// backend/routes/paymentRoutes.js
-const express = require("express");
 const Stripe = require("stripe");
 const Campground = require("../models/Campground");
 const Booking = require("../models/Booking");
-const { protect } = require("../middleware/auth");
-
-const router = express.Router();
 
 // Initialize Stripe with your secret key
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: "2025-10-29.clover", // or your account's API version
-});
-
-// POST /api/create-payment-intent
-router.post("/create-payment-intent", async (req, res) => {
-  try {
-    const { amount } = req.body;
-
-    if (!amount) {
-      return res.status(400).json({ error: "Amount is required" });
-    }
-
-    // amount must be in smallest currency unit (e.g. 78800 = ฿788.00)
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount,
-      currency: "thb",
-      //   automatic_payment_methods: { enabled: true },
-      payment_method_types: ["card"],
-    });
-
-    return res.json({
-      clientSecret: paymentIntent.client_secret,
-    });
-  } catch (err) {
-    console.error("Stripe error:", err);
-    return res.status(500).json({ error: err.message });
-  }
 });
 
 const ensureUrlString = (rawUrl, fallbackUrl) => {
@@ -69,7 +38,40 @@ const ensureSessionPlaceholder = (href) => {
   );
 };
 
-router.post("/create-checkout-session", protect, async (req, res) => {
+// @desc    Create payment intent
+// @route   POST /api/v1/payments/create-payment-intent
+// @access  Public (or Private depending on usage, currently no protect middleware in original for this route?)
+// Note: Original code didn't have protect on create-payment-intent, but usually it should.
+// I will keep it as is from the route file.
+exports.createPaymentIntent = async (req, res) => {
+  try {
+    const { amount } = req.body;
+
+    if (!amount) {
+      return res.status(400).json({ error: "Amount is required" });
+    }
+
+    // amount must be in smallest currency unit (e.g. 78800 = ฿788.00)
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount,
+      currency: "thb",
+      //   automatic_payment_methods: { enabled: true },
+      payment_method_types: ["card"],
+    });
+
+    return res.json({
+      clientSecret: paymentIntent.client_secret,
+    });
+  } catch (err) {
+    console.error("Stripe error:", err);
+    return res.status(500).json({ error: err.message });
+  }
+};
+
+// @desc    Create checkout session
+// @route   POST /api/v1/payments/create-checkout-session
+// @access  Private
+exports.createCheckoutSession = async (req, res) => {
   try {
     const { campgroundId, bookingDate, customerEmail } = req.body || {};
 
@@ -152,9 +154,12 @@ router.post("/create-checkout-session", protect, async (req, res) => {
     console.error("Stripe checkout error:", error);
     return res.status(500).json({ error: "Unable to create checkout session" });
   }
-});
+};
 
-router.post("/finalize-booking", protect, async (req, res) => {
+// @desc    Finalize booking after payment
+// @route   POST /api/v1/payments/finalize-booking
+// @access  Private
+exports.finalizeBooking = async (req, res) => {
   try {
     const { sessionId } = req.body || {};
 
@@ -234,6 +239,4 @@ router.post("/finalize-booking", protect, async (req, res) => {
       .status(500)
       .json({ error: "Unable to finalize booking for this session" });
   }
-});
-
-module.exports = router;
+};
