@@ -9,7 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Calendar, MapPin, Trash2, CreditCard } from "lucide-react";
+import { Calendar, MapPin, Trash2, CreditCard, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
   AlertDialog,
@@ -29,11 +29,17 @@ import { format } from "date-fns";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { formatPrice } from "@/lib/utils";
 import type { Booking as BookingType, Campground } from "@/types";
-import { createCheckoutSession, finalizeCheckoutBooking } from "@/services/payments";
+import {
+  createCheckoutSession,
+  finalizeCheckoutBooking,
+} from "@/services/payments";
 import { Badge } from "@/components/ui/badge";
 import { EditBookingDialog } from "@/components/EditBookingDialog";
+import { useAuth } from "@/hooks/useAuth";
 
 const MyBookings = () => {
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -188,10 +194,12 @@ const MyBookings = () => {
       <div className="container mx-auto px-4 py-12">
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-foreground mb-2">
-            My Bookings
+            {isAdmin ? "Bookings" : "My Bookings"}
           </h1>
           <p className="text-muted-foreground">
-            View and manage your campground reservations
+            {isAdmin
+              ? "Manage all campground reservations"
+              : "View and manage your campground reservations"}
           </p>
         </div>
 
@@ -262,6 +270,10 @@ const MyBookings = () => {
                         {format(new Date(booking.bookingDate), "PPP")}
                       </CardDescription>
                       <CardDescription className="flex items-center gap-2 mt-2">
+                        <User className="h-4 w-4" />
+                        {booking.user?.name || "Unknown User"}
+                      </CardDescription>
+                      <CardDescription className="flex items-center gap-2 mt-2">
                         <MapPin className="h-4 w-4" />
                         {formatLocation(booking.campground) ||
                           "Location unavailable"}
@@ -286,7 +298,7 @@ const MyBookings = () => {
                       </CardDescription>
                     </div>
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                      {booking.paymentStatus !== "paid" && (
+                      {!isAdmin && booking.paymentStatus !== "paid" && (
                         <Button
                           variant="default"
                           disabled={checkoutMutation.isPending}
@@ -313,8 +325,8 @@ const MyBookings = () => {
                           <AlertDialogHeader>
                             <AlertDialogTitle>Delete Booking</AlertDialogTitle>
                             <AlertDialogDescription>
-                              Are you sure you want to delete this booking?
-                              This action cannot be undone.
+                              Are you sure you want to delete this booking? This
+                              action cannot be undone.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>

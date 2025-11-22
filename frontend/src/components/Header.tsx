@@ -33,15 +33,14 @@ const Header = () => {
                   <Link to="/campgrounds">Campgrounds</Link>
                 </Button>
                 <Button asChild variant="ghost">
-                  <Link to="/my-bookings">My Bookings</Link>
+                  <Link to="/my-bookings">
+                    {isAdmin ? "Bookings" : "My Bookings"}
+                  </Link>
                 </Button>
-                {isAdmin && (
-                  <Button asChild variant="ghost">
-                    <Link to="/admin/bookings">Admin</Link>
-                  </Button>
-                )}
                 <div className="flex items-center gap-3 border-l border-border pl-4 text-sm text-muted-foreground">
-                  <span className="font-medium text-foreground">{user.name}</span>
+                  <span className="font-medium text-foreground">
+                    {user.name}
+                  </span>
                   <span className="rounded-full bg-muted px-2 py-0.5 text-xs uppercase tracking-wide">
                     {user.role}
                   </span>

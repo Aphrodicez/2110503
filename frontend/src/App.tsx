@@ -9,7 +9,6 @@ import Login from "./pages/Login";
 import Campgrounds from "./pages/Campgrounds";
 import BookCampground from "./pages/BookCampground";
 import MyBookings from "./pages/MyBookings";
-import AdminBookings from "./pages/AdminBookings";
 import NotFound from "./pages/NotFound";
 import CampgroundReviews from "./pages/CampgroundReviews";
 import { AuthProvider } from "@/context/AuthContext";
@@ -46,14 +45,6 @@ const App = () => (
               element={
                 <RequireAuth>
                   <MyBookings />
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/admin/bookings"
-              element={
-                <RequireAuth role="admin">
-                  <AdminBookings />
                 </RequireAuth>
               }
             />
